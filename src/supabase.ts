@@ -15,7 +15,10 @@ export const sendOTPEmail = async (email: string): Promise<{ success: boolean; e
     const { error } = await supabase.auth.signInWithOtp({
       email: email,
       options: {
-        shouldCreateUser: false, // We don't want to create user in Supabase, just send OTP
+        shouldCreateUser: true, // Allow user creation for OTP verification
+        data: {
+          email_verified: false, // We'll verify through our own flow
+        }
       }
     });
 
