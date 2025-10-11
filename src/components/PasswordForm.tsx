@@ -43,10 +43,18 @@ export default function PasswordForm({ email, onLogin, onBack }: PasswordFormPro
 
       <div className="relative z-10 w-full max-w-md space-y-8 animate-fade-in">
         <div className="text-center space-y-4">
-          <div className="flex justify-center mb-6">
-            <div className="p-4 rounded-2xl bg-[#F97171]/10 border border-[#F97171]/20">
-              <Shield className="w-12 h-12 text-[#F97171]" strokeWidth={1.5} />
-            </div>
+          <div className="flex justify-center items-center gap-4 mb-6">
+            <img 
+              src="https://i.ibb.co/vCkSQZzF/Gemini-Generated-Image-z435qzz435qzz435.png" 
+              alt="CIVORAA Logo" 
+              className="w-20 h-20 rounded-2xl object-cover"
+            />
+            <div className="text-3xl font-bold text-[#9DA3AF]">×</div>
+            <img 
+              src="https://formfees.com/wp-content/uploads/2021/12/ITM-Business-School-Logo.png" 
+              alt="ITM Logo" 
+              className="w-20 h-20 rounded-2xl object-cover bg-white p-2"
+            />
           </div>
 
           <h1 className="text-3xl font-bold tracking-tight">

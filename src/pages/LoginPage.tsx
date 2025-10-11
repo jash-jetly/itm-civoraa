@@ -17,8 +17,8 @@ export default function LoginPage({ onContinue }: LoginPageProps) {
   const [authStep, setAuthStep] = useState<AuthStep>('email');
 
   const handleContinue = async () => {
-    if (!email.endsWith('@itm.ac.in') && !email.endsWith('@isu.ac.in')) {
-      setError('Only ITM or ISU email addresses are allowed');
+    if (!email.endsWith('@isu.ac.in')) {
+      setError('Only ISU email addresses are allowed');
       return;
     }
     
@@ -80,10 +80,18 @@ export default function LoginPage({ onContinue }: LoginPageProps) {
 
       <div className="relative z-10 w-full max-w-md space-y-8 animate-fade-in">
         <div className="text-center space-y-4">
-          <div className="flex justify-center mb-6">
-            <div className="p-4 rounded-2xl bg-[#F97171]/10 border border-[#F97171]/20">
-              <Shield className="w-12 h-12 text-[#F97171]" strokeWidth={1.5} />
-            </div>
+          <div className="flex justify-center items-center gap-4 mb-6">
+            <img 
+              src="https://i.ibb.co/vCkSQZzF/Gemini-Generated-Image-z435qzz435qzz435.png" 
+              alt="CIVORAA Logo" 
+              className="w-20 h-20 rounded-2xl object-cover"
+            />
+            <div className="text-3xl font-bold text-[#9DA3AF]">×</div>
+            <img 
+              src="https://formfees.com/wp-content/uploads/2021/12/ITM-Business-School-Logo.png" 
+              alt="ITM Logo" 
+              className="w-20 h-20 rounded-2xl object-cover bg-white p-2"
+            />
           </div>
 
           <h1 className="text-5xl font-bold tracking-tight">
@@ -103,7 +111,7 @@ export default function LoginPage({ onContinue }: LoginPageProps) {
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="yourname@itm.ac.in or @isu.ac.in"
+              placeholder="yourname@isu.ac.in"
               className="w-full px-4 py-4 bg-[#0A0A0A] border border-[#1A1A1A] rounded-xl text-white placeholder-[#9DA3AF]/50 focus:outline-none focus:border-[#F97171]/50 focus:ring-2 focus:ring-[#F97171]/20 transition-all"
             />
             {error && (
