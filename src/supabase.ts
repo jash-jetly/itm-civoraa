@@ -9,60 +9,71 @@ if (!supabaseUrl || !supabaseAnonKey) {
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
-// Mock OTP storage for development
-const mockOTPs = new Map<string, { code: string; timestamp: number }>();
-
-// OTP Email Service (Mock for development)
+// OTP Email Service using Supabase Auth
 export const sendOTPEmail = async (email: string): Promise<{ success: boolean; error?: string }> => {
   try {
-    // Generate a 6-digit OTP
-    const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
-    
-    // Store OTP with timestamp (expires in 5 minutes)
-    mockOTPs.set(email, {
-      code: otpCode,
-      timestamp: Date.now()
+    // Method 1: Try signInWithOtp without emailRedirectTo (should send OTP)
+    const { error } = await supabase.auth.signInWithOtp({
+      email: email,
+      options: {
+        shouldCreateUser: true,
+        // No emailRedirectTo = OTP code instead of magic link
+        data: {
+          email_verified: false,
+        }
+      }
     });
 
-    // Log OTP for development (remove in production)
-    console.log(`🔐 OTP for ${email}: ${otpCode}`);
-    
-    // Simulate email sending delay
-    await new Promise(resolve => setTimeout(resolve, 500));
+    if (error) {
+      console.error('Error sending OTP:', error);
+      
+      // Handle specific rate limit error
+      if (error.message.includes('rate limit exceeded') || error.message.includes('429')) {
+        return { 
+          success: false, 
+          error: 'Too many email requests. Please wait 5-10 minutes before trying again. This is a Supabase server limit to prevent spam.' 
+        };
+      }
+      
+      return { success: false, error: error.message };
+    }
 
     return { success: true };
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error sending OTP:', error);
+    
+    // Handle rate limit errors in catch block too
+    if (error?.message?.includes('rate limit exceeded') || error?.status === 429) {
+      return { 
+        success: false, 
+        error: 'Too many email requests. Please wait 5-10 minutes before trying again. This is a Supabase server limit to prevent spam.' 
+      };
+    }
+    
     return { success: false, error: 'Failed to send OTP' };
   }
 };
 
-// Verify OTP (Mock for development)
+// Verify OTP using Supabase Auth
 export const verifyOTP = async (email: string, token: string): Promise<{ success: boolean; error?: string }> => {
   try {
-    const storedOTP = mockOTPs.get(email);
-    
-    if (!storedOTP) {
-      return { success: false, error: 'No OTP found for this email' };
+    const { data, error } = await supabase.auth.verifyOtp({
+      email: email,
+      token: token,
+      type: 'email'
+    });
+
+    if (error) {
+      console.error('Error verifying OTP:', error);
+      return { success: false, error: error.message };
     }
 
-    // Check if OTP is expired (5 minutes)
-    const isExpired = Date.now() - storedOTP.timestamp > 5 * 60 * 1000;
-    if (isExpired) {
-      mockOTPs.delete(email);
-      return { success: false, error: 'OTP has expired' };
+    if (data.user) {
+      console.log(`✅ OTP verified successfully for ${email}`);
+      return { success: true };
     }
 
-    // Verify OTP code
-    if (storedOTP.code !== token) {
-      return { success: false, error: 'Invalid OTP code' };
-    }
-
-    // OTP is valid, remove it from storage
-    mockOTPs.delete(email);
-    console.log(`✅ OTP verified successfully for ${email}`);
-
-    return { success: true };
+    return { success: false, error: 'Verification failed' };
   } catch (error) {
     console.error('Error verifying OTP:', error);
     return { success: false, error: 'Failed to verify OTP' };

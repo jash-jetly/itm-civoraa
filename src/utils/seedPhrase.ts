@@ -276,7 +276,7 @@ export const generateSeedPhrase = (): string[] => {
 };
 
 // Get random word positions for verification
-export const getRandomWordPositions = (count: number = 3): number[] => {
+export const getRandomWordPositions = (count: number = 4): number[] => {
   const positions: number[] = [];
   const usedPositions = new Set<number>();
   

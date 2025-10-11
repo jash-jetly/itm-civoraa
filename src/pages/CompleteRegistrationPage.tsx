@@ -1,17 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { completeRegistration } from '../services/authService';
 import { clearAuthSession } from '../utils/security';
 
 interface CompleteRegistrationPageProps {
   onComplete?: (email: string) => void;
+  onRetry?: () => void;
+  onStartOver?: () => void;
 }
 
-const CompleteRegistrationPage: React.FC<CompleteRegistrationPageProps> = ({ onComplete }) => {
+const CompleteRegistrationPage: React.FC<CompleteRegistrationPageProps> = ({ onComplete, onRetry, onStartOver }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
-  const navigate = useNavigate();
 
   useEffect(() => {
     const handleRegistrationCompletion = async () => {
@@ -26,8 +26,6 @@ const CompleteRegistrationPage: React.FC<CompleteRegistrationPageProps> = ({ onC
           setTimeout(() => {
             if (onComplete && result.user) {
               onComplete(result.user.email || '');
-            } else {
-              navigate('/dashboard');
             }
           }, 3000);
         } else {
@@ -44,21 +42,21 @@ const CompleteRegistrationPage: React.FC<CompleteRegistrationPageProps> = ({ onC
     };
 
     handleRegistrationCompletion();
-  }, [navigate, onComplete]);
+  }, [onComplete]);
 
   const handleRetry = () => {
-    navigate('/seed-verification');
+    if (onRetry) onRetry();
   };
 
   const handleStartOver = () => {
     // Clear all session storage
     sessionStorage.clear();
-    navigate('/login');
+    if (onStartOver) onStartOver();
   };
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 to-black flex items-center justify-center p-4">
         <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md text-center">
           {/* Header with logos */}
           <div className="flex items-center justify-center mb-8">
@@ -91,7 +89,7 @@ const CompleteRegistrationPage: React.FC<CompleteRegistrationPageProps> = ({ onC
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 to-black flex items-center justify-center p-4">
         <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md text-center">
           {/* Header with logos */}
           <div className="flex items-center justify-center mb-8">
@@ -126,7 +124,7 @@ const CompleteRegistrationPage: React.FC<CompleteRegistrationPageProps> = ({ onC
             <div className="space-y-3">
               <button
                 onClick={handleRetry}
-                className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-semibold hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
+                className="w-full bg-[#F97171] text-white py-3 px-4 rounded-lg font-semibold hover:bg-[#F97171]/80 focus:outline-none focus:ring-2 focus:ring-[#F97171] focus:ring-offset-2 transition-colors"
               >
                 Try Again
               </button>
@@ -146,7 +144,7 @@ const CompleteRegistrationPage: React.FC<CompleteRegistrationPageProps> = ({ onC
 
   if (success) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 to-black flex items-center justify-center p-4">
         <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md text-center">
           {/* Header with logos */}
           <div className="flex items-center justify-center mb-8">

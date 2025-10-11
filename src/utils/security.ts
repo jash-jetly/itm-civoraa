@@ -68,9 +68,9 @@ export const validateOTP = (otp: string): { isValid: boolean; error?: string } =
 // Rate limiting for OTP requests
 class RateLimiter {
   private attempts: Map<string, { count: number; lastAttempt: number }> = new Map();
-  private readonly maxAttempts = 5;
+  private readonly maxAttempts = 3; // Reduced from 5 to 3 to stay under Supabase limits
   private readonly windowMs = 15 * 60 * 1000; // 15 minutes
-  private readonly cooldownMs = 60 * 1000; // 1 minute between requests
+  private readonly cooldownMs = 2 * 60 * 1000; // Increased from 1 to 2 minutes between requests
 
   canMakeRequest(identifier: string): { allowed: boolean; error?: string; retryAfter?: number } {
     const now = Date.now();
@@ -92,7 +92,7 @@ class RateLimiter {
       const retryAfter = Math.ceil((this.cooldownMs - (now - record.lastAttempt)) / 1000);
       return { 
         allowed: false, 
-        error: `Please wait ${retryAfter} seconds before requesting another OTP`,
+        error: `Please wait ${Math.ceil(retryAfter / 60)} minutes before requesting another OTP to avoid server rate limits`,
         retryAfter 
       };
     }
@@ -102,7 +102,7 @@ class RateLimiter {
       const retryAfter = Math.ceil((this.windowMs - (now - record.lastAttempt)) / 1000 / 60);
       return { 
         allowed: false, 
-        error: `Too many attempts. Please try again in ${retryAfter} minutes`,
+        error: `Too many OTP requests. Please wait ${retryAfter} minutes to avoid hitting email rate limits`,
         retryAfter: retryAfter * 60 
       };
     }

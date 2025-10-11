@@ -40,7 +40,7 @@ const SeedPhraseDisplayPage: React.FC<SeedPhraseDisplayPageProps> = ({ onSeedPhr
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 to-black flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-2xl">
         {/* Header with logos */}
         <div className="flex items-center justify-center mb-8">
@@ -95,7 +95,7 @@ const SeedPhraseDisplayPage: React.FC<SeedPhraseDisplayPageProps> = ({ onSeedPhr
             <h3 className="text-lg font-semibold text-gray-900">Your Seed Phrase</h3>
             <button
               onClick={() => setIsRevealed(!isRevealed)}
-              className="text-sm text-blue-600 hover:text-blue-800 font-medium"
+              className="text-sm text-[#F97171] hover:text-[#F97171]/80 font-medium"
             >
               {isRevealed ? 'Hide' : 'Reveal'} Words
             </button>
@@ -135,7 +135,7 @@ const SeedPhraseDisplayPage: React.FC<SeedPhraseDisplayPageProps> = ({ onSeedPhr
           <label className="flex items-start space-x-3">
             <input
               type="checkbox"
-              className="mt-1 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+              className="mt-1 h-4 w-4 text-[#F97171] focus:ring-[#F97171] border-gray-300 rounded"
               required
             />
             <span className="text-sm text-gray-700">
@@ -148,7 +148,7 @@ const SeedPhraseDisplayPage: React.FC<SeedPhraseDisplayPageProps> = ({ onSeedPhr
         <button
           onClick={handleContinue}
           disabled={!isRevealed}
-          className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-semibold hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+          className="w-full bg-[#F97171] text-white py-3 px-4 rounded-lg font-semibold hover:bg-[#F97171]/80 focus:outline-none focus:ring-2 focus:ring-[#F97171] focus:ring-offset-2 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
         >
           Continue to Verification
         </button>

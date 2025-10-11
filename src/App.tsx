@@ -43,7 +43,11 @@ function App() {
       case 'seed-verification':
         return <SeedPhraseVerificationPage onVerified={() => navigateTo('complete-registration')} onBack={() => navigateTo('seed-display')} />;
       case 'complete-registration':
-        return <CompleteRegistrationPage onComplete={(email) => { setEmail(email); navigateTo('home'); }} />;
+        return <CompleteRegistrationPage 
+          onComplete={(email) => { setEmail(email); navigateTo('home'); }} 
+          onRetry={() => navigateTo('seed-verification')}
+          onStartOver={() => navigateTo('login')}
+        />;
       case 'home':
         return <HomePage onNavigate={navigateTo} />;
       case 'local':

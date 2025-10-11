@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Eye, EyeOff } from 'lucide-react';
 import { getSecureSessionItem, setSecureSessionItem } from '../utils/security';
 import { getRandomWordPositions, verifySeedPhrase } from '../utils/seedPhrase';
 
@@ -13,6 +14,7 @@ const SeedPhraseVerificationPage: React.FC<SeedPhraseVerificationPageProps> = ({
   const [userInputs, setUserInputs] = useState<{ [key: number]: string }>({});
   const [error, setError] = useState<string>('');
   const [isLoading, setIsLoading] = useState(false);
+  const [showInputs, setShowInputs] = useState(false);
 
   useEffect(() => {
     // Get seed phrase from secure session storage
@@ -26,8 +28,8 @@ const SeedPhraseVerificationPage: React.FC<SeedPhraseVerificationPageProps> = ({
       const parsedSeedPhrase = JSON.parse(storedSeedPhrase);
       setSeedPhrase(parsedSeedPhrase);
       
-      // Generate random positions for verification
-      const positions = getRandomWordPositions(parsedSeedPhrase.length);
+      // Generate random positions for verification (4 words)
+      const positions = getRandomWordPositions(4);
       setVerificationPositions(positions);
       
       // Initialize user inputs
@@ -93,7 +95,7 @@ const SeedPhraseVerificationPage: React.FC<SeedPhraseVerificationPageProps> = ({
   );
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 to-black flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md">
         {/* Header with logos */}
         <div className="flex items-center justify-center mb-8">
@@ -135,13 +137,24 @@ const SeedPhraseVerificationPage: React.FC<SeedPhraseVerificationPageProps> = ({
         )}
 
         <div className="space-y-6 mb-8">
+          <div className="flex items-center justify-between mb-4">
+            <span className="text-sm font-medium text-gray-700">Seed Phrase Words</span>
+            <button
+              type="button"
+              onClick={() => setShowInputs(!showInputs)}
+              className="flex items-center text-sm text-[#F97171] hover:text-[#F97171]/80 transition-colors"
+            >
+              {showInputs ? <EyeOff className="w-4 h-4 mr-1" /> : <Eye className="w-4 h-4 mr-1" />}
+              {showInputs ? 'Hide' : 'Show'}
+            </button>
+          </div>
           {verificationPositions.map((position) => (
             <div key={position}>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Word #{position}
               </label>
               <input
-                type="text"
+                type={showInputs ? "text" : "password"}
                 value={userInputs[position] || ''}
                 onChange={(e) => handleInputChange(position, e.target.value)}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -157,7 +170,7 @@ const SeedPhraseVerificationPage: React.FC<SeedPhraseVerificationPageProps> = ({
           <button
             onClick={handleVerification}
             disabled={!isFormValid || isLoading}
-            className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-semibold hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+            className="w-full bg-[#F97171] text-white py-3 px-4 rounded-lg font-semibold hover:bg-[#F97171]/80 focus:outline-none focus:ring-2 focus:ring-[#F97171] focus:ring-offset-2 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
           >
             {isLoading ? 'Verifying...' : 'Verify Seed Phrase'}
           </button>
