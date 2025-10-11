@@ -26,7 +26,10 @@ function App() {
   const renderPage = () => {
     switch (currentPage) {
       case 'login':
-        return <LoginPage onContinue={(email) => { setEmail(email); navigateTo('password'); }} />;
+        return <LoginPage 
+          onContinue={(email) => { setEmail(email); navigateTo('password'); }} 
+          onNavigateToOTP={(email) => { setEmail(email); navigateTo('otp-verification'); }}
+        />;
       case 'password':
         return <PasswordPage email={email} onLogin={() => navigateTo('seed')} onBack={() => navigateTo('login')} />;
       case 'seed':

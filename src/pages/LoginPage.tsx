@@ -1,21 +1,20 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { initiateAuthFlow, loginUser } from '../services/authService';
 import PasswordForm from '../components/PasswordForm';
 import { clearAuthSession, validateEmail, sanitizeInput } from '../utils/security';
 
 interface LoginPageProps {
   onContinue: (email: string) => void;
+  onNavigateToOTP?: (email: string) => void;
 }
 
 type AuthStep = 'email' | 'login';
 
-export default function LoginPage({ onContinue }: LoginPageProps) {
+export default function LoginPage({ onContinue, onNavigateToOTP }: LoginPageProps) {
   const [email, setEmail] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [authStep, setAuthStep] = useState<AuthStep>('email');
-  const navigate = useNavigate();
 
   const handleContinue = async () => {
     // Sanitize and validate email input
@@ -40,7 +39,9 @@ export default function LoginPage({ onContinue }: LoginPageProps) {
         } else if (result.step === 'otp') {
           // New user - navigate to OTP verification
           sessionStorage.setItem('registrationEmail', sanitizedEmail);
-          navigate('/otp-verification');
+          if (onNavigateToOTP) {
+            onNavigateToOTP(sanitizedEmail);
+          }
         }
       } else {
         setError(result.message || 'Authentication failed. Please try again.');
