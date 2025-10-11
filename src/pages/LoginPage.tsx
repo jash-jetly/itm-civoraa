@@ -1,24 +1,29 @@
 import { useState } from 'react';
-import { Shield } from 'lucide-react';
-import { checkUserExists, registerUser, loginUser } from '../services/authService';
-import RegistrationForm from '../components/RegistrationForm';
+import { useNavigate } from 'react-router-dom';
+import { initiateAuthFlow, loginUser } from '../services/authService';
 import PasswordForm from '../components/PasswordForm';
+import { clearAuthSession, validateEmail, sanitizeInput } from '../utils/security';
 
 interface LoginPageProps {
   onContinue: (email: string) => void;
 }
 
-type AuthStep = 'email' | 'register' | 'login';
+type AuthStep = 'email' | 'login';
 
 export default function LoginPage({ onContinue }: LoginPageProps) {
   const [email, setEmail] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [authStep, setAuthStep] = useState<AuthStep>('email');
+  const navigate = useNavigate();
 
   const handleContinue = async () => {
-    if (!email.endsWith('@isu.ac.in')) {
-      setError('Only ISU email addresses are allowed');
+    // Sanitize and validate email input
+    const sanitizedEmail = sanitizeInput(email);
+    const emailValidation = validateEmail(sanitizedEmail);
+    
+    if (!emailValidation.isValid) {
+      setError(emailValidation.error || 'Invalid email format');
       return;
     }
     
@@ -26,43 +31,41 @@ export default function LoginPage({ onContinue }: LoginPageProps) {
     setLoading(true);
     
     try {
-      const userExists = await checkUserExists(email);
-      if (userExists) {
-        setAuthStep('login');
+      const result = await initiateAuthFlow(sanitizedEmail);
+      
+      if (result.success) {
+        if (result.step === 'login') {
+          // Existing user - show password form
+          setAuthStep('login');
+        } else if (result.step === 'otp') {
+          // New user - navigate to OTP verification
+          sessionStorage.setItem('registrationEmail', sanitizedEmail);
+          navigate('/otp-verification');
+        }
       } else {
-        setAuthStep('register');
+        setError(result.message || 'Authentication failed. Please try again.');
       }
     } catch (error) {
-      setError('Failed to check user status. Please try again.');
+      setError('Failed to process authentication. Please try again.');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleRegister = async (email: string, password: string) => {
-    await registerUser(email, password);
-    onContinue(email);
-  };
-
   const handleLogin = async (email: string, password: string) => {
-    await loginUser(email, password);
-    onContinue(email);
+    try {
+      await loginUser(email, password);
+      clearAuthSession(); // Clear any existing auth session data
+      onContinue(email);
+    } catch (error) {
+      throw error; // Let PasswordForm handle the error
+    }
   };
 
   const handleBack = () => {
     setAuthStep('email');
     setError('');
   };
-
-  if (authStep === 'register') {
-    return (
-      <RegistrationForm
-        email={email}
-        onRegister={handleRegister}
-        onBack={handleBack}
-      />
-    );
-  }
 
   if (authStep === 'login') {
     return (
