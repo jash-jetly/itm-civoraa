@@ -1,5 +1,18 @@
 {
   "projects": {
     "default": "civoraa"
-  }
+  },
+  "targets": {
+    "civoraa": {
+      "hosting": {
+        "main-site": [
+          "civoraa"
+        ],
+        "itm-civoraa-main": [
+          "itm-civoraa-main"
+        ]
+      }
+    }
+  },
+  "etags": {}
 }

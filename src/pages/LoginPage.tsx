@@ -1,22 +1,78 @@
 import { useState } from 'react';
 import { Shield } from 'lucide-react';
+import { checkUserExists, registerUser, loginUser } from '../services/authService';
+import RegistrationForm from '../components/RegistrationForm';
+import PasswordForm from '../components/PasswordForm';
 
 interface LoginPageProps {
   onContinue: (email: string) => void;
 }
 
+type AuthStep = 'email' | 'register' | 'login';
+
 export default function LoginPage({ onContinue }: LoginPageProps) {
   const [email, setEmail] = useState('');
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [authStep, setAuthStep] = useState<AuthStep>('email');
 
-  const handleContinue = () => {
+  const handleContinue = async () => {
     if (!email.endsWith('@itm.ac.in') && !email.endsWith('@isu.ac.in')) {
       setError('Only ITM or ISU email addresses are allowed');
       return;
     }
+    
     setError('');
+    setLoading(true);
+    
+    try {
+      const userExists = await checkUserExists(email);
+      if (userExists) {
+        setAuthStep('login');
+      } else {
+        setAuthStep('register');
+      }
+    } catch (error) {
+      setError('Failed to check user status. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleRegister = async (email: string, password: string) => {
+    await registerUser(email, password);
     onContinue(email);
   };
+
+  const handleLogin = async (email: string, password: string) => {
+    await loginUser(email, password);
+    onContinue(email);
+  };
+
+  const handleBack = () => {
+    setAuthStep('email');
+    setError('');
+  };
+
+  if (authStep === 'register') {
+    return (
+      <RegistrationForm
+        email={email}
+        onRegister={handleRegister}
+        onBack={handleBack}
+      />
+    );
+  }
+
+  if (authStep === 'login') {
+    return (
+      <PasswordForm
+        email={email}
+        onLogin={handleLogin}
+        onBack={handleBack}
+      />
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center px-6 relative overflow-hidden">
@@ -57,9 +113,10 @@ export default function LoginPage({ onContinue }: LoginPageProps) {
 
           <button
             onClick={handleContinue}
-            className="w-full py-4 bg-[#F97171] hover:bg-[#F97171]/90 text-black font-semibold rounded-xl transition-all shadow-[0_0_30px_rgba(249,113,113,0.3)] hover:shadow-[0_0_40px_rgba(249,113,113,0.5)] active:scale-[0.98]"
+            disabled={loading}
+            className="w-full py-4 bg-[#F97171] hover:bg-[#F97171]/90 disabled:bg-[#F97171]/50 text-black font-semibold rounded-xl transition-all shadow-[0_0_30px_rgba(249,113,113,0.3)] hover:shadow-[0_0_40px_rgba(249,113,113,0.5)] active:scale-[0.98] disabled:cursor-not-allowed"
           >
-            Continue
+            {loading ? 'Checking...' : 'Continue'}
           </button>
         </div>
 
