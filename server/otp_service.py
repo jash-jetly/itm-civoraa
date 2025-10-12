@@ -14,6 +14,11 @@ load_dotenv()
 app = Flask(__name__)
 CORS(app)
 
+# Simple health endpoint for uptime checks
+@app.get('/')
+def health():
+    return jsonify({ 'ok': True, 'service': 'otp', 'version': '1.0' })
+
 # In-memory store: email -> { code: str, expires_at: float }
 otp_store = {}
 OTP_TTL_SECONDS = int(os.getenv('OTP_TTL_SECONDS', '600'))  # default 10 minutes
@@ -44,22 +49,30 @@ def send_email(recipient: str, subject: str, body_text: str, body_html: str):
     part_html = MIMEText(body_html, 'html')
     msg.attach(part_text)
     msg.attach(part_html)
+    # Use a short socket timeout so HTTP requests fail fast when SMTP is unreachable
+    SOCKET_TIMEOUT = int(os.getenv('SMTP_TIMEOUT_SECONDS', '20'))
 
-    if SMTP_USE_SSL:
-        with smtplib.SMTP_SSL(SMTP_HOST, SMTP_PORT) as server:
-            # Explicit EHLO before login to satisfy some servers/clients
-            try:
+    try:
+        if SMTP_USE_SSL:
+            # SSL on specified port (default 465)
+            with smtplib.SMTP_SSL(SMTP_HOST, SMTP_PORT, timeout=SOCKET_TIMEOUT) as server:
+                try:
+                    server.ehlo()
+                except Exception:
+                    pass
+                server.login(SMTP_USER, SMTP_PASS)
+                server.sendmail(SENDER_EMAIL, [recipient], msg.as_string())
+        else:
+            # STARTTLS on specified port (Zoho prefers 587)
+            with smtplib.SMTP(SMTP_HOST, SMTP_PORT, timeout=SOCKET_TIMEOUT) as server:
                 server.ehlo()
-            except Exception:
-                pass
-            server.login(SMTP_USER, SMTP_PASS)
-            server.sendmail(SENDER_EMAIL, [recipient], msg.as_string())
-    else:
-        with smtplib.SMTP(SMTP_HOST, SMTP_PORT) as server:
-            server.ehlo()
-            server.starttls()
-            server.login(SMTP_USER, SMTP_PASS)
-        server.sendmail(SENDER_EMAIL, [recipient], msg.as_string())
+                server.starttls()
+                server.ehlo()
+                server.login(SMTP_USER, SMTP_PASS)
+                server.sendmail(SENDER_EMAIL, [recipient], msg.as_string())
+    except Exception as e:
+        # Provide a clearer error up the stack so the API responds quickly
+        raise RuntimeError(f"SMTP send failed (host={SMTP_HOST}, port={SMTP_PORT}, ssl={SMTP_USE_SSL}): {str(e)}")
 
 @app.post('/send-otp')
 def send_otp():
