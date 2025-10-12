@@ -11,7 +11,6 @@ import {
   serverTimestamp 
 } from 'firebase/firestore';
 import { auth, db } from '../firebase';
-import { sendOTPEmail, verifyOTP } from '../supabase';
 import { 
   validateEmail, 
   validatePassword, 
@@ -148,15 +147,6 @@ export const initiateAuthFlow = async (email: string): Promise<AuthFlowResult> =
       };
     }
 
-    // Check rate limiting for OTP requests
-    if (!otpRateLimiter.canMakeRequest(sanitizedEmail)) {
-      return {
-        success: false,
-        step: 'register',
-        message: 'Too many requests. Please wait before trying again.'
-      };
-    }
-    
     const userExists = await checkUserExists(sanitizedEmail);
     
     if (userExists) {
@@ -168,9 +158,18 @@ export const initiateAuthFlow = async (email: string): Promise<AuthFlowResult> =
         message: 'User found. Please enter your password.'
       };
     } else {
-      // New user, send OTP for verification
+      // Rate limit OTP requests client-side (server should also enforce)
+      const rateCheck = otpRateLimiter.canMakeRequest(sanitizedEmail);
+      if (!rateCheck.allowed) {
+        return {
+          success: false,
+          step: 'register',
+          message: sanitizeErrorMessage(rateCheck.error || 'Please wait before requesting another OTP.')
+        };
+      }
+
+      // New user, send OTP via local SMTP service
       const otpResult = await sendOTPEmail(sanitizedEmail);
-      
       if (otpResult.success) {
         setSecureSessionItem('authEmail', sanitizedEmail);
         setSecureSessionItem('registrationStep', 'otp');
@@ -222,14 +221,11 @@ export const verifyOTPAndProceed = async (email: string, otp: string): Promise<A
         message: sanitizeErrorMessage(otpValidation.error || 'Invalid OTP format.')
       };
     }
-    
+
     const verificationResult = await verifyOTP(sanitizedEmail, sanitizedOTP);
-    
     if (verificationResult.success) {
-      // Store temporary verification status securely
       setSecureSessionItem('otpVerified', sanitizedEmail);
       setSecureSessionItem('registrationStep', 'password');
-      
       return {
         success: true,
         step: 'password',
@@ -258,10 +254,10 @@ export const setPasswordAfterOTP = async (email: string, password: string): Prom
     // Sanitize and validate inputs
     const sanitizedEmail = sanitizeInput(email);
     const sanitizedPassword = sanitizeInput(password);
-    
+
     const emailValidation = validateEmail(sanitizedEmail);
     const passwordValidation = validatePassword(sanitizedPassword);
-    
+
     if (!emailValidation.isValid) {
       return {
         success: false,
@@ -269,7 +265,7 @@ export const setPasswordAfterOTP = async (email: string, password: string): Prom
         message: sanitizeErrorMessage(emailValidation.error || 'Invalid email format.')
       };
     }
-    
+
     if (!passwordValidation.isValid) {
       return {
         success: false,
@@ -278,7 +274,7 @@ export const setPasswordAfterOTP = async (email: string, password: string): Prom
       };
     }
 
-    // Check if OTP was verified securely
+    // Ensure OTP was verified
     const otpVerified = getSecureSessionItem('otpVerified');
     if (otpVerified !== sanitizedEmail) {
       return {
@@ -292,7 +288,7 @@ export const setPasswordAfterOTP = async (email: string, password: string): Prom
     setSecureSessionItem('tempPassword', sanitizedPassword);
     setSecureSessionItem('tempEmail', sanitizedEmail);
     setSecureSessionItem('registrationStep', 'seed_phrase');
-    
+
     return {
       success: true,
       step: 'seed_phrase',
@@ -373,11 +369,10 @@ export const completeRegistration = async (): Promise<AuthFlowResult> => {
   }
 };
 
-// Resend OTP
+// Resend OTP via local SMTP service
 export const resendOTP = async (email: string): Promise<AuthFlowResult> => {
   try {
     const otpResult = await sendOTPEmail(email);
-    
     if (otpResult.success) {
       return {
         success: true,
@@ -398,5 +393,42 @@ export const resendOTP = async (email: string): Promise<AuthFlowResult> => {
       step: 'otp',
       message: 'Failed to resend code. Please try again.'
     };
+  }
+};
+
+// Local OTP API helpers
+const OTP_API_BASE = (import.meta as any).env?.VITE_OTP_API_BASE || 'http://localhost:8000';
+
+const sendOTPEmail = async (email: string): Promise<{ success: boolean; error?: string }> => {
+  try {
+    const res = await fetch(`${OTP_API_BASE}/send-otp`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email })
+    });
+    const json = await res.json();
+    if (!res.ok) {
+      return { success: false, error: json.error || 'Failed to send OTP' };
+    }
+    return { success: Boolean(json.success) };
+  } catch (e: any) {
+    return { success: false, error: e?.message || 'Network error sending OTP' };
+  }
+};
+
+const verifyOTP = async (email: string, otp: string): Promise<{ success: boolean; error?: string }> => {
+  try {
+    const res = await fetch(`${OTP_API_BASE}/verify-otp`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, otp })
+    });
+    const json = await res.json();
+    if (!res.ok) {
+      return { success: false, error: json.error || 'Failed to verify OTP' };
+    }
+    return { success: Boolean(json.success) };
+  } catch (e: any) {
+    return { success: false, error: e?.message || 'Network error verifying OTP' };
   }
 };

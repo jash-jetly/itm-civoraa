@@ -18,15 +18,13 @@ const PasswordSetupPage: React.FC<PasswordSetupPageProps> = ({ onPasswordSet, on
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   useEffect(() => {
-    // Check if OTP was verified using secure session storage
+    // Require OTP verification before password setup
     const otpVerified = getSecureSessionItem('otpVerified');
     const registrationEmail = getSecureSessionItem('authEmail');
-    
-    if (!otpVerified || !registrationEmail) {
+    if (!otpVerified || !registrationEmail || otpVerified !== registrationEmail) {
       if (onBack) onBack();
       return;
     }
-    
     setEmail(registrationEmail);
   }, [onBack]);
 
@@ -68,7 +66,7 @@ const PasswordSetupPage: React.FC<PasswordSetupPageProps> = ({ onPasswordSet, on
     setError('');
 
     try {
-      const email = getSecureSessionItem('otpVerified') || '';
+      const email = getSecureSessionItem('authEmail') || '';
       const result = await setPasswordAfterOTP(email, password);
       
       if (result.success) {
@@ -84,132 +82,102 @@ const PasswordSetupPage: React.FC<PasswordSetupPageProps> = ({ onPasswordSet, on
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 to-black flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md">
+    <div className="min-h-screen flex flex-col items-center justify-center px-6 relative overflow-hidden">
+      <div className="absolute inset-0 bg-gradient-radial from-[#F97171]/5 via-transparent to-transparent opacity-30"></div>
+
+      <div className="relative z-10 w-full max-w-md space-y-8 animate-fade-in">
         {/* Header with logos */}
-        <div className="flex items-center justify-center mb-8">
-          <img 
-            src="https://i.ibb.co/vCkSQZzF/Gemini-Generated-Image-z435qzz435qzz435.png" 
-            alt="CIVORAA" 
-            className="w-20 h-20 rounded-lg object-cover"
+        <div className="flex justify-center items-center gap-4 mb-6">
+          <img
+            src="https://i.ibb.co/vCkSQZzF/Gemini-Generated-Image-z435qzz435qzz435.png"
+            alt="CIVORAA Logo"
+            className="w-20 h-20 rounded-2xl object-cover"
           />
-          <span className="text-3xl font-bold text-gray-400 mx-4">×</span>
-          <img 
-            src="https://formfees.com/wp-content/uploads/2021/12/ITM-Business-School-Logo.png" 
-            alt="ITM" 
-            className="w-20 h-20 rounded-lg object-cover"
+          <div className="text-3xl font-bold text-[#9DA3AF]">×</div>
+          <img
+            src="https://formfees.com/wp-content/uploads/2021/12/ITM-Business-School-Logo.png"
+            alt="ITM Logo"
+            className="w-20 h-20 rounded-2xl object-cover bg-white p-2"
           />
         </div>
 
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            Set Your Password
-          </h1>
-          <p className="text-gray-600">
-            Create a strong password for your account
-          </p>
-          <p className="text-sm text-gray-500 mt-2">
-            {email}
-          </p>
+        <div className="text-center space-y-2">
+          <h1 className="text-4xl font-bold tracking-tight">Set Your Password</h1>
+          <p className="text-[#9DA3AF] text-sm">Create a strong password for your account</p>
+          <p className="text-[#9DA3AF]/80 text-xs mt-1">{email}</p>
         </div>
 
         {error && (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
-            <div className="flex">
-              <div className="flex-shrink-0">
-                <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                </svg>
-              </div>
-              <div className="ml-3">
-                <p className="text-sm text-red-800">{error}</p>
-              </div>
-            </div>
-          </div>
+          <p className="text-[#F97171] text-xs mt-2 bg-[#F97171]/10 border border-[#F97171]/30 rounded-lg px-3 py-2">
+            {error}
+          </p>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Password
-            </label>
+        <form onSubmit={handleSubmit} className="space-y-6 mt-8">
+          <div className="space-y-2">
+            <label className="text-sm text-[#9DA3AF] font-medium">Password</label>
             <div className="relative">
               <input
-                type={showPassword ? "text" : "password"}
+                type={showPassword ? 'text' : 'password'}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 placeholder="Enter your password"
+                className="w-full px-4 py-4 bg-[#0A0A0A] border border-[#1A1A1A] rounded-xl text-white placeholder-[#9DA3AF]/50 focus:outline-none focus:border-[#F97171]/50 focus:ring-2 focus:ring-[#F97171]/20 pr-12"
                 required
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9DA3AF] hover:text-white transition-colors"
               >
                 {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
               </button>
             </div>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Confirm Password
-            </label>
+          <div className="space-y-2">
+            <label className="text-sm text-[#9DA3AF] font-medium">Confirm Password</label>
             <div className="relative">
               <input
-                type={showConfirmPassword ? "text" : "password"}
+                type={showConfirmPassword ? 'text' : 'password'}
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 placeholder="Confirm your password"
+                className="w-full px-4 py-4 bg-[#0A0A0A] border border-[#1A1A1A] rounded-xl text-white placeholder-[#9DA3AF]/50 focus:outline-none focus:border-[#F97171]/50 focus:ring-2 focus:ring-[#F97171]/20 pr-12"
                 required
               />
               <button
                 type="button"
                 onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9DA3AF] hover:text-white transition-colors"
               >
                 {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
               </button>
             </div>
           </div>
 
-          {/* Password Requirements */}
-          <div className="bg-gray-50 rounded-lg p-4">
-            <h4 className="text-sm font-medium text-gray-700 mb-2">Password Requirements:</h4>
-            <ul className="text-xs text-gray-600 space-y-1">
-              <li className={password.length >= 8 ? 'text-green-600' : ''}>
-                • At least 8 characters long
-              </li>
-              <li className={/(?=.*[a-z])/.test(password) ? 'text-green-600' : ''}>
-                • One lowercase letter
-              </li>
-              <li className={/(?=.*[A-Z])/.test(password) ? 'text-green-600' : ''}>
-                • One uppercase letter
-              </li>
-              <li className={/(?=.*\d)/.test(password) ? 'text-green-600' : ''}>
-                • One number
-              </li>
-              <li className={/(?=.*[@$!%*?&])/.test(password) ? 'text-green-600' : ''}>
-                • One special character (@$!%*?&)
-              </li>
+          <div className="bg-[#0A0A0A] border border-[#1A1A1A] rounded-xl p-4">
+            <h4 className="text-sm font-medium text-white mb-2">Password Requirements</h4>
+            <ul className="text-xs text-[#9DA3AF] space-y-1">
+              <li className={password.length >= 8 ? 'text-green-500' : ''}>• At least 8 characters long</li>
+              <li className={/(?=.*[a-z])/.test(password) ? 'text-green-500' : ''}>• One lowercase letter</li>
+              <li className={/(?=.*[A-Z])/.test(password) ? 'text-green-500' : ''}>• One uppercase letter</li>
+              <li className={/(?=.*\d)/.test(password) ? 'text-green-500' : ''}>• One number</li>
+              <li className={/(?=.*[@$!%*?&])/.test(password) ? 'text-green-500' : ''}>• One special character (@$!%*?&)</li>
             </ul>
           </div>
 
           <button
             type="submit"
             disabled={isLoading || !password || !confirmPassword}
-            className="w-full bg-[#F97171] text-white py-3 px-4 rounded-lg font-semibold hover:bg-[#F97171]/80 focus:outline-none focus:ring-2 focus:ring-[#F97171] focus:ring-offset-2 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+            className="w-full py-4 bg-[#F97171] hover:bg-[#F97171]/90 disabled:bg-[#F97171]/50 text-black font-semibold rounded-xl transition-all shadow-[0_0_30px_rgba(249,113,113,0.3)] hover:shadow-[0_0_40px_rgba(249,113,113,0.5)] active:scale-[0.98] disabled:cursor-not-allowed"
           >
             {isLoading ? 'Setting Password...' : 'Continue'}
           </button>
         </form>
 
-        <div className="mt-6 text-center">
-          <p className="text-xs text-gray-500">
-            Next, you'll be shown a seed phrase to secure your account
-          </p>
+        <div className="text-center mt-8">
+          <p className="text-[#9DA3AF]/60 text-xs">Next, you'll be shown a seed phrase to secure your account</p>
         </div>
       </div>
     </div>

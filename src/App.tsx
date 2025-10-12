@@ -27,7 +27,9 @@ function App() {
     switch (currentPage) {
       case 'login':
         return <LoginPage 
-          onContinue={(email) => { setEmail(email); navigateTo('password'); }} 
+          // Existing account: after successful password verification, go straight to Home
+          onContinue={(email) => { setEmail(email); navigateTo('home'); }} 
+          // New account: proceed with OTP → password setup → seed phrase flow
           onNavigateToOTP={(email) => { setEmail(email); navigateTo('otp-verification'); }}
         />;
       case 'password':

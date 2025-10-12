@@ -25,12 +25,9 @@ export default function OTPVerificationPage({ email, onVerified, onBack }: OTPVe
 
   const handleOtpChange = (index: number, value: string) => {
     if (value.length > 1) return;
-    
     const newOtp = [...otp];
     newOtp[index] = value;
     setOtp(newOtp);
-
-    // Auto-focus next input
     if (value && index < 5) {
       const nextInput = document.getElementById(`otp-${index + 1}`);
       nextInput?.focus();
@@ -46,24 +43,18 @@ export default function OTPVerificationPage({ email, onVerified, onBack }: OTPVe
 
   const handleSubmit = async () => {
     const otpCode = otp.join('');
-    
     if (otpCode.length !== 6) {
       setError('Please enter the complete 6-digit code');
       return;
     }
-
-    // Validate OTP format
     const sanitizedOTP = sanitizeInput(otpCode);
     const otpValidation = validateOTP(sanitizedOTP);
-    
     if (!otpValidation.isValid) {
       setError(otpValidation.error || 'Invalid OTP format');
       return;
     }
-
     setError('');
     setLoading(true);
-
     try {
       const result = await verifyOTPAndProceed(email, sanitizedOTP);
       if (result.success) {
@@ -81,12 +72,11 @@ export default function OTPVerificationPage({ email, onVerified, onBack }: OTPVe
   const handleResend = async () => {
     setResendLoading(true);
     setError('');
-
     try {
       const result = await resendOTP(email);
       if (result.success) {
-        setResendCooldown(60); // 60 second cooldown
-        setOtp(['', '', '', '', '', '']); // Clear current OTP
+        setResendCooldown(60);
+        setOtp(['', '', '', '', '', '']);
       } else {
         setError(result.message || 'Failed to resend code');
       }

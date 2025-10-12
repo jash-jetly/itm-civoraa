@@ -40,59 +40,51 @@ const SeedPhraseDisplayPage: React.FC<SeedPhraseDisplayPageProps> = ({ onSeedPhr
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 to-black flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-2xl">
+    <div className="min-h-screen flex flex-col items-center justify-center px-6 relative overflow-hidden">
+      <div className="absolute inset-0 bg-gradient-radial from-[#F97171]/5 via-transparent to-transparent opacity-30"></div>
+
+      <div className="relative z-10 w-full max-w-2xl space-y-8 animate-fade-in">
         {/* Header with logos */}
-        <div className="flex items-center justify-center mb-8">
-          <img 
-            src="https://i.ibb.co/vCkSQZzF/Gemini-Generated-Image-z435qzz435qzz435.png" 
-            alt="CIVORAA" 
-            className="w-20 h-20 rounded-lg object-cover"
+        <div className="flex justify-center items-center gap-4 mb-6">
+          <img
+            src="https://i.ibb.co/vCkSQZzF/Gemini-Generated-Image-z435qzz435qzz435.png"
+            alt="CIVORAA Logo"
+            className="w-20 h-20 rounded-2xl object-cover"
           />
-          <span className="text-3xl font-bold text-gray-400 mx-4">×</span>
-          <img 
-            src="https://formfees.com/wp-content/uploads/2021/12/ITM-Business-School-Logo.png" 
-            alt="ITM" 
-            className="w-20 h-20 rounded-lg object-cover"
+          <div className="text-3xl font-bold text-[#9DA3AF]">×</div>
+          <img
+            src="https://formfees.com/wp-content/uploads/2021/12/ITM-Business-School-Logo.png"
+            alt="ITM Logo"
+            className="w-20 h-20 rounded-2xl object-cover bg-white p-2"
           />
         </div>
 
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            Save Your Seed Phrase
-          </h1>
-          <p className="text-gray-600">
-            Write down these 12 words in order and store them safely. You'll need them to verify your account.
-          </p>
+        <div className="text-center space-y-2">
+          <h1 className="text-4xl font-bold tracking-tight">Save Your Seed Phrase</h1>
+          <p className="text-[#9DA3AF] text-sm">Write down these 12 words and store them safely.</p>
         </div>
 
         {/* Security Warning */}
-        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
-          <div className="flex items-start">
-            <div className="flex-shrink-0">
-              <svg className="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-              </svg>
-            </div>
-            <div className="ml-3">
-              <h3 className="text-sm font-medium text-yellow-800">
-                Important Security Notice
-              </h3>
-              <div className="mt-2 text-sm text-yellow-700">
-                <ul className="list-disc pl-5 space-y-1">
-                  <li>Never share your seed phrase with anyone</li>
-                  <li>Store it in a secure, offline location</li>
-                  <li>Anyone with access to these words can access your account</li>
-                </ul>
-              </div>
+        <div className="bg-[#0A0A0A] border border-[#1A1A1A] rounded-xl p-4">
+          <div className="flex items-start gap-3">
+            <svg className="h-5 w-5 text-yellow-400 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+            </svg>
+            <div>
+              <h3 className="text-sm font-medium text-white">Important Security Notice</h3>
+              <ul className="mt-2 text-xs text-[#9DA3AF] space-y-1 list-disc pl-5">
+                <li>Never share your seed phrase with anyone</li>
+                <li>Store it in a secure, offline location</li>
+                <li>Anyone with these words can access your account</li>
+              </ul>
             </div>
           </div>
         </div>
 
         {/* Seed Phrase Display */}
-        <div className="mb-6">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-gray-900">Your Seed Phrase</h3>
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h3 className="text-lg font-semibold text-white">Your Seed Phrase</h3>
             <button
               onClick={() => setIsRevealed(!isRevealed)}
               className="text-sm text-[#F97171] hover:text-[#F97171]/80 font-medium"
@@ -101,14 +93,14 @@ const SeedPhraseDisplayPage: React.FC<SeedPhraseDisplayPageProps> = ({ onSeedPhr
             </button>
           </div>
 
-          <div className="grid grid-cols-3 gap-3 mb-4">
+          <div className="grid grid-cols-3 gap-3">
             {seedPhrase.map((word, index) => (
               <div
                 key={index}
-                className="bg-gray-50 border border-gray-200 rounded-lg p-3 text-center"
+                className="bg-[#0A0A0A] border border-[#1A1A1A] rounded-xl p-4 text-center"
               >
-                <div className="text-xs text-gray-500 mb-1">{index + 1}</div>
-                <div className="font-mono text-sm font-medium text-gray-900">
+                <div className="text-xs text-[#9DA3AF] mb-2">{index + 1}</div>
+                <div className="font-mono text-sm font-medium text-white">
                   {isRevealed ? word : '••••••'}
                 </div>
               </div>
@@ -119,7 +111,7 @@ const SeedPhraseDisplayPage: React.FC<SeedPhraseDisplayPageProps> = ({ onSeedPhr
             <div className="flex justify-center">
               <button
                 onClick={handleCopyToClipboard}
-                className="flex items-center space-x-2 text-sm text-gray-600 hover:text-gray-800 border border-gray-300 rounded-lg px-3 py-2 hover:bg-gray-50 transition-colors"
+                className="flex items-center gap-2 text-sm text-[#9DA3AF] hover:text-white border border-[#1A1A1A] rounded-xl px-3 py-2 hover:bg-[#0A0A0A] transition-colors"
               >
                 <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
@@ -131,29 +123,26 @@ const SeedPhraseDisplayPage: React.FC<SeedPhraseDisplayPageProps> = ({ onSeedPhr
         </div>
 
         {/* Confirmation Checkbox */}
-        <div className="mb-6">
-          <label className="flex items-start space-x-3">
-            <input
-              type="checkbox"
-              className="mt-1 h-4 w-4 text-[#F97171] focus:ring-[#F97171] border-gray-300 rounded"
-              required
-            />
-            <span className="text-sm text-gray-700">
-              I have written down my seed phrase and stored it in a safe place. I understand that I will need these words to verify my account.
-            </span>
-          </label>
-        </div>
+        <label className="flex items-start gap-3 mt-4">
+          <input
+            type="checkbox"
+            className="mt-1 h-4 w-4 text-[#F97171] focus:ring-[#F97171] border-[#1A1A1A] bg-[#0A0A0A] rounded"
+            required
+          />
+          <span className="text-sm text-[#9DA3AF]">
+            I have written down my seed phrase and stored it in a safe place. I understand that I will need these words to verify my account.
+          </span>
+        </label>
 
-        {/* Continue Button */}
         <button
           onClick={handleContinue}
           disabled={!isRevealed}
-          className="w-full bg-[#F97171] text-white py-3 px-4 rounded-lg font-semibold hover:bg-[#F97171]/80 focus:outline-none focus:ring-2 focus:ring-[#F97171] focus:ring-offset-2 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+          className="w-full mt-6 py-4 bg-[#F97171] hover:bg-[#F97171]/90 disabled:bg-[#F97171]/50 text-black font-semibold rounded-xl transition-all shadow-[0_0_30px_rgba(249,113,113,0.3)] hover:shadow-[0_0_40px_rgba(249,113,113,0.5)] active:scale-[0.98] disabled:cursor-not-allowed"
         >
           Continue to Verification
         </button>
 
-        <p className="text-xs text-gray-500 text-center mt-4">
+        <p className="text-[#9DA3AF]/60 text-xs text-center mt-4">
           Next, you'll be asked to verify some words from your seed phrase
         </p>
       </div>
