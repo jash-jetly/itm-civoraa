@@ -24,7 +24,7 @@ otp_store = {}
 OTP_TTL_SECONDS = int(os.getenv('OTP_TTL_SECONDS', '600'))  # default 10 minutes
 
 SMTP_HOST = os.getenv('SMTP_HOST', 'smtp.gmail.com')
-SMTP_USE_SSL = (os.getenv('SMTP_USE_SSL', 'true').lower() == 'true')
+SMTP_USE_SSL = (os.getenv('SMTP_USE_SSL', 'false').lower() == 'true')
 # Default port depends on SSL usage: 465 (SSL) or 587 (STARTTLS)
 _port_env = os.getenv('SMTP_PORT')
 SMTP_PORT = int(_port_env) if _port_env else (465 if SMTP_USE_SSL else 587)
