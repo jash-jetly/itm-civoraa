@@ -3,6 +3,7 @@ import smtplib
 import random
 import string
 import time
+import requests
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from flask import Flask, request, jsonify
@@ -33,13 +34,40 @@ SMTP_USER = os.getenv('SMTP_USER') or ''
 SMTP_PASS = (os.getenv('SMTP_PASS') or '').replace(' ', '')
 SENDER_NAME = os.getenv('SENDER_NAME', SMTP_USER or 'CIVORAA')
 SENDER_EMAIL = os.getenv('SENDER_EMAIL', SMTP_USER)
+RESEND_API_KEY = os.getenv('RESEND_API_KEY', '')
 
 def generate_otp(length: int = 6) -> str:
     return ''.join(random.choices(string.digits, k=length))
 
 def send_email(recipient: str, subject: str, body_text: str, body_html: str):
+    # Prefer Resend HTTP API if configured; falls back to SMTP otherwise
+    if RESEND_API_KEY:
+        try:
+            resp = requests.post(
+                'https://api.resend.com/emails',
+                headers={
+                    'Authorization': f'Bearer {RESEND_API_KEY}',
+                    'Content-Type': 'application/json',
+                },
+                json={
+                    'from': f"{SENDER_NAME} <{SENDER_EMAIL}>",
+                    'to': [recipient],
+                    'subject': subject,
+                    'html': body_html,
+                    'text': body_text,
+                },
+                timeout=15,
+            )
+            if 200 <= resp.status_code < 300:
+                return
+            else:
+                raise RuntimeError(f'Resend send failed: {resp.status_code} {resp.text}')
+        except Exception as e:
+            raise RuntimeError(f'Resend send failed: {str(e)}')
+
+    # SMTP path requires credentials
     if not SMTP_USER or not SMTP_PASS:
-        raise RuntimeError('SMTP credentials not set. Please set SMTP_USER and SMTP_PASS env vars.')
+        raise RuntimeError('SMTP credentials not set. Set RESEND_API_KEY or SMTP_USER/SMTP_PASS env vars.')
     msg = MIMEMultipart('alternative')
     msg['Subject'] = subject
     msg['From'] = f"{SENDER_NAME} <{SENDER_EMAIL}>"
@@ -52,27 +80,45 @@ def send_email(recipient: str, subject: str, body_text: str, body_html: str):
     # Use a short socket timeout so HTTP requests fail fast when SMTP is unreachable
     SOCKET_TIMEOUT = int(os.getenv('SMTP_TIMEOUT_SECONDS', '20'))
 
-    try:
-        if SMTP_USE_SSL:
-            # SSL on specified port (default 465)
-            with smtplib.SMTP_SSL(SMTP_HOST, SMTP_PORT, timeout=SOCKET_TIMEOUT) as server:
-                try:
+    # Attempt delivery with fallback between SSL:465 and STARTTLS:587 to handle cloud egress policies
+    attempts = []
+    if SMTP_USE_SSL:
+        attempts.append(("SSL", SMTP_HOST, SMTP_PORT))
+        attempts.append(("STARTTLS", SMTP_HOST, 587))
+    else:
+        attempts.append(("STARTTLS", SMTP_HOST, SMTP_PORT))
+        attempts.append(("SSL", SMTP_HOST, 465))
+
+    last_error = None
+    for mode, host, port in attempts:
+        try:
+            if mode == "SSL":
+                with smtplib.SMTP_SSL(host, port, timeout=SOCKET_TIMEOUT) as server:
+                    try:
+                        server.ehlo()
+                    except Exception:
+                        pass
+                    server.login(SMTP_USER, SMTP_PASS)
+                    server.sendmail(SENDER_EMAIL, [recipient], msg.as_string())
+                return
+            else:
+                with smtplib.SMTP(host, port, timeout=SOCKET_TIMEOUT) as server:
                     server.ehlo()
-                except Exception:
-                    pass
-                server.login(SMTP_USER, SMTP_PASS)
-                server.sendmail(SENDER_EMAIL, [recipient], msg.as_string())
-        else:
-            # STARTTLS on specified port (Zoho prefers 587)
-            with smtplib.SMTP(SMTP_HOST, SMTP_PORT, timeout=SOCKET_TIMEOUT) as server:
-                server.ehlo()
-                server.starttls()
-                server.ehlo()
-                server.login(SMTP_USER, SMTP_PASS)
-                server.sendmail(SENDER_EMAIL, [recipient], msg.as_string())
-    except Exception as e:
-        # Provide a clearer error up the stack so the API responds quickly
-        raise RuntimeError(f"SMTP send failed (host={SMTP_HOST}, port={SMTP_PORT}, ssl={SMTP_USE_SSL}): {str(e)}")
+                    server.starttls()
+                    server.ehlo()
+                    server.login(SMTP_USER, SMTP_PASS)
+                    server.sendmail(SENDER_EMAIL, [recipient], msg.as_string())
+                return
+        except smtplib.SMTPAuthenticationError as e:
+            # Auth failures should not fallback; surface immediately
+            raise RuntimeError(f"SMTP auth failed (user={SMTP_USER}, host={host}, port={port}, ssl={mode=='SSL'}): {str(e)}")
+        except Exception as e:
+            last_error = f"{mode}@{host}:{port} -> {str(e)}"
+            continue
+
+    raise RuntimeError(
+        f"SMTP send failed after attempts {', '.join([f'{m}:{p}' for m,_,p in attempts])}. Last error: {last_error}"
+    )
 
 @app.post('/send-otp')
 def send_otp():
@@ -153,6 +199,43 @@ def verify_otp():
     # success: consume OTP
     otp_store.pop(email, None)
     return jsonify({ 'success': True })
+
+@app.get('/smtp-check')
+def smtp_check():
+    # Quick connectivity/login check without sending an email
+    SOCKET_TIMEOUT = int(os.getenv('SMTP_TIMEOUT_SECONDS', '10'))
+    attempts = []
+    if SMTP_USE_SSL:
+        attempts.append(("SSL", SMTP_HOST, SMTP_PORT))
+        attempts.append(("STARTTLS", SMTP_HOST, 587))
+    else:
+        attempts.append(("STARTTLS", SMTP_HOST, SMTP_PORT))
+        attempts.append(("SSL", SMTP_HOST, 465))
+
+    for mode, host, port in attempts:
+        try:
+            if mode == "SSL":
+                with smtplib.SMTP_SSL(host, port, timeout=SOCKET_TIMEOUT) as server:
+                    try:
+                        server.ehlo()
+                    except Exception:
+                        pass
+                    server.login(SMTP_USER, SMTP_PASS)
+                return jsonify({ 'ok': True, 'mode': mode, 'host': host, 'port': port })
+            else:
+                with smtplib.SMTP(host, port, timeout=SOCKET_TIMEOUT) as server:
+                    server.ehlo()
+                    server.starttls()
+                    server.ehlo()
+                    server.login(SMTP_USER, SMTP_PASS)
+                return jsonify({ 'ok': True, 'mode': mode, 'host': host, 'port': port })
+        except smtplib.SMTPAuthenticationError as e:
+            return jsonify({ 'ok': False, 'auth': False, 'error': str(e), 'mode': mode, 'host': host, 'port': port }), 401
+        except Exception:
+            # try next attempt
+            continue
+
+    return jsonify({ 'ok': False, 'error': 'connectivity timeout or blocked egress', 'attempts': [ { 'mode': m, 'host': h, 'port': p } for m,h,p in attempts ] }), 504
 
 if __name__ == '__main__':
     port = int(os.getenv('PORT', '8000'))
