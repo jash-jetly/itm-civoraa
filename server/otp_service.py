@@ -3,7 +3,6 @@ import smtplib
 import random
 import string
 import time
-import requests
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from flask import Flask, request, jsonify
@@ -34,40 +33,13 @@ SMTP_USER = os.getenv('SMTP_USER') or ''
 SMTP_PASS = (os.getenv('SMTP_PASS') or '').replace(' ', '')
 SENDER_NAME = os.getenv('SENDER_NAME', SMTP_USER or 'CIVORAA')
 SENDER_EMAIL = os.getenv('SENDER_EMAIL', SMTP_USER)
-RESEND_API_KEY = os.getenv('RESEND_API_KEY', '')
 
 def generate_otp(length: int = 6) -> str:
     return ''.join(random.choices(string.digits, k=length))
 
 def send_email(recipient: str, subject: str, body_text: str, body_html: str):
-    # Prefer Resend HTTP API if configured; falls back to SMTP otherwise
-    if RESEND_API_KEY:
-        try:
-            resp = requests.post(
-                'https://api.resend.com/emails',
-                headers={
-                    'Authorization': f'Bearer {RESEND_API_KEY}',
-                    'Content-Type': 'application/json',
-                },
-                json={
-                    'from': f"{SENDER_NAME} <{SENDER_EMAIL}>",
-                    'to': [recipient],
-                    'subject': subject,
-                    'html': body_html,
-                    'text': body_text,
-                },
-                timeout=15,
-            )
-            if 200 <= resp.status_code < 300:
-                return
-            else:
-                raise RuntimeError(f'Resend send failed: {resp.status_code} {resp.text}')
-        except Exception as e:
-            raise RuntimeError(f'Resend send failed: {str(e)}')
-
-    # SMTP path requires credentials
     if not SMTP_USER or not SMTP_PASS:
-        raise RuntimeError('SMTP credentials not set. Set RESEND_API_KEY or SMTP_USER/SMTP_PASS env vars.')
+        raise RuntimeError('SMTP credentials not set. Please set SMTP_USER and SMTP_PASS env vars.')
     msg = MIMEMultipart('alternative')
     msg['Subject'] = subject
     msg['From'] = f"{SENDER_NAME} <{SENDER_EMAIL}>"
