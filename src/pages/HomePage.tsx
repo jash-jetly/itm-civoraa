@@ -89,7 +89,7 @@ export default function HomePage({ onNavigate }: HomePageProps) {
               }`}
               onClick={() => handleScope('inclass')}
             >
-              In-Class
+              In-Cohorts
             </button>
           </div>
         </div>

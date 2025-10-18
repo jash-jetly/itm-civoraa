@@ -119,13 +119,6 @@ export default function MePage({ email, onNavigate, onLogout }: MePageProps) {
         </div>
 
         <div className="space-y-3">
-          <button
-            onClick={handleRegenerateSeed}
-            className="w-full py-4 bg-gradient-to-br from-[#0A0A0A] to-[#1A1A1A] border border-[#1A1A1A] hover:border-[#F97171]/50 text-white font-semibold rounded-xl transition-all flex items-center justify-center gap-2"
-          >
-            <Key className="w-5 h-5" />
-            Regenerate Seed Phrase
-          </button>
 
           <button
             onClick={onLogout}
