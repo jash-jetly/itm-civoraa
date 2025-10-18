@@ -94,7 +94,7 @@ export default function InClassPage({ onNavigate }: InClassPageProps) {
         )}
       </div>
 
-      <BottomNav currentPage="local" onNavigate={onNavigate} />
+      <BottomNav currentPage="home" onNavigate={onNavigate} />
     </div>
   );
 }

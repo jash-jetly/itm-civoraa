@@ -8,7 +8,7 @@ interface BottomNavProps {
 export default function BottomNav({ currentPage, onNavigate }: BottomNavProps) {
   const navItems = [
     { id: 'home' as const, icon: Home, label: 'Home' },
-    { id: 'local' as const, icon: Newspaper, label: 'Local' },
+    { id: 'local' as const, icon: Newspaper, label: 'News' },
     { id: 'create' as const, icon: Plus, label: 'Create' },
     { id: 'wallet' as const, icon: Wallet, label: 'Wallet' },
     { id: 'me' as const, icon: User, label: 'Me' }
