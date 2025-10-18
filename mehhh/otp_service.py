@@ -23,7 +23,7 @@ def health():
 otp_store = {}
 OTP_TTL_SECONDS = int(os.getenv('OTP_TTL_SECONDS', '600'))  # default 10 minutes
 
-SMTP_HOST = os.getenv('SMTP_HOST', 'smtp.gmail.com')
+SMTP_HOST = os.getenv('SMTP_HOST', 'smtp.zoho.com')
 SMTP_USE_SSL = (os.getenv('SMTP_USE_SSL', 'false').lower() == 'true')
 # Default port depends on SSL usage: 465 (SSL) or 587 (STARTTLS)
 _port_env = os.getenv('SMTP_PORT')

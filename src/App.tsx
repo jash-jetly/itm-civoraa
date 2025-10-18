@@ -1,9 +1,13 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { onAuthStateChanged } from 'firebase/auth';
+import { auth } from './firebase';
+import { logoutUser } from './services/authService';
 import LoginPage from './pages/LoginPage';
 import PasswordPage from './pages/PasswordPage';
 import SeedPhrasePage from './pages/SeedPhrasePage';
 import HomePage from './pages/HomePage';
 import LocalPage from './pages/LocalPage';
+import InClassPage from './pages/InClassPage';
 import CreatePage from './pages/CreatePage';
 import WalletPage from './pages/WalletPage';
 import MePage from './pages/MePage';
@@ -13,15 +17,41 @@ import SeedPhraseDisplayPage from './pages/SeedPhraseDisplayPage';
 import SeedPhraseVerificationPage from './pages/SeedPhraseVerificationPage';
 import CompleteRegistrationPage from './pages/CompleteRegistrationPage';
 
-type Page = 'login' | 'password' | 'seed' | 'home' | 'local' | 'create' | 'wallet' | 'me' | 'otp-verification' | 'password-setup' | 'seed-display' | 'seed-verification' | 'complete-registration';
+type Page = 'login' | 'password' | 'seed' | 'home' | 'local' | 'inclass' | 'create' | 'wallet' | 'me' | 'otp-verification' | 'password-setup' | 'seed-display' | 'seed-verification' | 'complete-registration';
 
 function App() {
-  const [currentPage, setCurrentPage] = useState<Page>('login');
+  const [currentPage, setCurrentPage] = useState<Page>(auth.currentUser ? 'home' : 'login');
   const [email, setEmail] = useState('');
 
   const navigateTo = (page: Page) => {
     setCurrentPage(page);
   };
+
+  // Keep user logged in across refreshes by reacting to Firebase auth state
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        setEmail(user.email || '');
+        setCurrentPage((prev) => {
+          // If we were at auth/registration pages on load, go to Home
+          const authPages: Page[] = [
+            'login',
+            'password',
+            'otp-verification',
+            'password-setup',
+            'seed-display',
+            'seed-verification',
+            'complete-registration',
+            'seed'
+          ];
+          return authPages.includes(prev) ? 'home' : prev;
+        });
+      } else {
+        setCurrentPage('login');
+      }
+    });
+    return () => unsubscribe();
+  }, []);
 
   const renderPage = () => {
     switch (currentPage) {
@@ -54,12 +84,14 @@ function App() {
         return <HomePage onNavigate={navigateTo} />;
       case 'local':
         return <LocalPage onNavigate={navigateTo} />;
+      case 'inclass':
+        return <InClassPage onNavigate={navigateTo} />;
       case 'create':
         return <CreatePage onNavigate={navigateTo} />;
       case 'wallet':
         return <WalletPage onNavigate={navigateTo} />;
       case 'me':
-        return <MePage onNavigate={navigateTo} onLogout={() => navigateTo('login')} />;
+        return <MePage email={email} onNavigate={navigateTo} onLogout={async () => { await logoutUser(); navigateTo('login'); }} />;
       default:
         return <LoginPage onContinue={(email) => { setEmail(email); navigateTo('password'); }} />;
     }

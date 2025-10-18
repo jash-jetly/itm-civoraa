@@ -65,12 +65,15 @@ export default function LocalPage({ onNavigate }: LocalPageProps) {
   return (
     <div className="min-h-screen bg-black pb-20">
       <div className="px-6 pt-8 pb-6 border-b border-[#1A1A1A] sticky top-0 bg-black/95 backdrop-blur-xl z-40">
-        <h1 className="text-2xl font-bold mb-1">Local Updates</h1>
-        <p className="text-[#9DA3AF] text-sm">Campus news and events</p>
+        <h1 className="text-2xl font-bold mb-1">Local</h1>
+        <p className="text-[#9DA3AF] text-sm">Campus news and local updates</p>
       </div>
 
-      <div className="px-6 py-4 space-y-4">
-        {MOCK_LOCAL_POSTS.map(post => (
+      {/* Campus Updates Section */}
+       <div className="px-6">
+         <h2 className="text-lg font-semibold text-white mb-4">Campus Updates</h2>
+         <div className="space-y-4">
+          {MOCK_LOCAL_POSTS.map(post => (
           <div
             key={post.id}
             className={`bg-gradient-to-br from-[#0A0A0A] to-[#1A1A1A] border ${
@@ -101,7 +104,8 @@ export default function LocalPage({ onNavigate }: LocalPageProps) {
               </div>
             </div>
           </div>
-        ))}
+          ))}
+        </div>
       </div>
 
       <BottomNav currentPage="local" onNavigate={onNavigate} />

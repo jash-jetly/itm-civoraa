@@ -2,6 +2,7 @@ import { User, FileText, BarChart3, MessageSquare, Key, LogOut } from 'lucide-re
 import BottomNav from '../components/BottomNav';
 
 interface MePageProps {
+  email: string;
   onNavigate: (page: 'home' | 'local' | 'create' | 'wallet' | 'me') => void;
   onLogout: () => void;
 }
@@ -12,9 +13,41 @@ const MOCK_USER_POSTS = [
   { id: 3, type: 'discussion', title: 'Best study spots on campus', upvotes: 92, status: 'active' }
 ];
 
-export default function MePage({ onNavigate, onLogout }: MePageProps) {
+export default function MePage({ email, onNavigate, onLogout }: MePageProps) {
   const handleRegenerateSeed = () => {
     alert('Seed phrase regeneration would be implemented here');
+  };
+
+  // Function to parse username from email format like "2025.jashj@isu.ac.in"
+  const parseUsername = (email: string): string => {
+    if (!email) return '@anonymous';
+    
+    try {
+      // Split email by @ to get the local part
+      const localPart = email.split('@')[0];
+      
+      // Split by . to separate year and username
+      const parts = localPart.split('.');
+      
+      if (parts.length >= 2) {
+        // Get the username part (everything after the first dot)
+        const usernamePart = parts.slice(1).join('.');
+        
+        // Insert space before capital letters and format properly
+        const formattedUsername = usernamePart
+          .replace(/([a-z])([A-Z])/g, '$1 $2') // Add space before capital letters
+          .split(' ')
+          .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+          .join(' ');
+        
+        return `@${formattedUsername}`;
+      }
+      
+      // Fallback: use the whole local part
+      return `@${localPart}`;
+    } catch (error) {
+      return '@anonymous';
+    }
   };
 
   return (
@@ -31,8 +64,8 @@ export default function MePage({ onNavigate, onLogout }: MePageProps) {
               <User className="w-8 h-8 text-[#F97171]" />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-white">@anonymous_247</h2>
-              <p className="text-[#9DA3AF] text-sm">student@itm.ac.in</p>
+              <h2 className="text-xl font-bold text-white">{parseUsername(email)}</h2>
+              <p className="text-[#9DA3AF] text-sm">{email || 'student@itm.ac.in'}</p>
             </div>
           </div>
 
