@@ -25,6 +25,7 @@ import {
 import { generateWalletAddress } from '../utils/walletUtils';
 
 export interface UserData {
+  name: string;
   email: string;
   createdAt: any;
   lastLogin: any;
@@ -43,7 +44,9 @@ export interface AuthFlowResult {
 // Check if user exists in Firestore
 export const checkUserExists = async (email: string): Promise<boolean> => {
   try {
-    const userDoc = await getDoc(doc(db, 'itm', email));
+    // Generate userId from email (remove @ and . for Firestore compatibility)
+    const userId = email.replace(/[@.]/g, '_');
+    const userDoc = await getDoc(doc(db, 'itm', 'users', 'profiles', userId));
     return userDoc.exists();
   } catch (error) {
     console.error('Error checking user existence:', error);
@@ -58,15 +61,20 @@ export const registerUser = async (email: string, password: string): Promise<Use
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
     const user = userCredential.user;
 
-    // Create user document in Firestore 'itm' collection
+    // Generate userId from email and extract name from email
+    const userId = email.replace(/[@.]/g, '_');
+    const name = email.split('@')[0]; // Extract name from email prefix
+
+    // Create user document in Firestore itm/users/profiles subcollection
     const userData: UserData = {
+      name: name,
       email: email,
       createdAt: serverTimestamp(),
       lastLogin: serverTimestamp(),
       walletAddress: generateWalletAddress()
     };
 
-    await setDoc(doc(db, 'itm', email), userData);
+    await setDoc(doc(db, 'itm', 'users', 'profiles', userId), userData);
     
     return user;
   } catch (error) {
@@ -97,7 +105,8 @@ export const loginUser = async (email: string, password: string): Promise<User> 
     const user = userCredential.user;
 
     // Update last login time
-    await setDoc(doc(db, 'itm', sanitizedEmail), {
+    const userId = sanitizedEmail.replace(/[@.]/g, '_');
+    await setDoc(doc(db, 'itm', 'users', 'profiles', userId), {
       lastLogin: serverTimestamp()
     }, { merge: true });
 
@@ -124,7 +133,8 @@ export const logoutUser = async (): Promise<void> => {
 // Get user data from Firestore
 export const getUserData = async (email: string): Promise<UserData | null> => {
   try {
-    const userDoc = await getDoc(doc(db, 'itm', email));
+    const userId = email.replace(/[@.]/g, '_');
+    const userDoc = await getDoc(doc(db, 'itm', 'users', 'profiles', userId));
     if (userDoc.exists()) {
       return userDoc.data() as UserData;
     }
@@ -340,8 +350,13 @@ export const completeRegistration = async (): Promise<AuthFlowResult> => {
     const userCredential = await createUserWithEmailAndPassword(auth, tempEmail, tempPassword);
     const user = userCredential.user;
 
+    // Generate userId from email and extract name from email
+    const userId = tempEmail.replace(/[@.]/g, '_');
+    const name = tempEmail.split('@')[0]; // Extract name from email prefix
+
     // Create user document in Firestore with enhanced data
     const userData: UserData = {
+      name: name,
       email: tempEmail,
       createdAt: serverTimestamp(),
       lastLogin: serverTimestamp(),
@@ -350,7 +365,7 @@ export const completeRegistration = async (): Promise<AuthFlowResult> => {
       registrationStep: 'completed'
     };
 
-    await setDoc(doc(db, 'itm', tempEmail), userData);
+    await setDoc(doc(db, 'itm', 'users', 'profiles', userId), userData);
     
     // Clean up session storage securely
     clearAuthSession();

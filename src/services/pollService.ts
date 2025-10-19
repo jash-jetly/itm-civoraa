@@ -173,13 +173,14 @@ export const createPoll = async (pollData: CreatePollData): Promise<{ success: b
       poll.className = pollData.className;
     }
 
-    // Determine collection based on visibility
-    const collectionName = pollData.visibility === 'global' ? 'global_polls' : 'class_polls';
-    
-    // Add to Firestore
-    const docRef = await addDoc(collection(db, collectionName), poll);
-    
-    return { success: true, pollId: docRef.id };
+    // Add to Firestore under itm collection
+    if (pollData.visibility === 'global') {
+      const docRef = await addDoc(collection(db, 'itm', 'data', 'global_polls'), poll);
+      return { success: true, pollId: docRef.id };
+    } else {
+      const docRef = await addDoc(collection(db, 'itm', 'data', 'class_polls'), poll);
+      return { success: true, pollId: docRef.id };
+    }
   } catch (error) {
     console.error('Error creating poll:', error);
     return { success: false, error: 'Failed to create poll. Please try again.' };
@@ -190,7 +191,7 @@ export const createPoll = async (pollData: CreatePollData): Promise<{ success: b
 export const getGlobalPolls = async (): Promise<{ success: boolean; polls?: Poll[]; error?: string }> => {
   try {
     const q = query(
-      collection(db, 'global_polls'),
+      collection(db, 'itm', 'data', 'global_polls'),
       orderBy('createdAt', 'desc')
     );
     
@@ -215,7 +216,7 @@ export const getGlobalPolls = async (): Promise<{ success: boolean; polls?: Poll
 export const getClassPolls = async (classId: number): Promise<{ success: boolean; polls?: Poll[]; error?: string }> => {
   try {
     const q = query(
-      collection(db, 'class_polls'),
+      collection(db, 'itm', 'data', 'class_polls'),
       where('classId', '==', classId),
       orderBy('createdAt', 'desc')
     );
@@ -241,7 +242,7 @@ export const getClassPolls = async (classId: number): Promise<{ success: boolean
 export const getAllClassPolls = async (): Promise<{ success: boolean; polls?: Poll[]; error?: string }> => {
   try {
     const q = query(
-      collection(db, 'class_polls'),
+      collection(db, 'itm', 'data', 'class_polls'),
       orderBy('createdAt', 'desc')
     );
     
@@ -266,7 +267,7 @@ export const getAllClassPolls = async (): Promise<{ success: boolean; polls?: Po
 export const voteOnPoll = async (pollId: string, optionId: string, visibility: 'global' | 'class', userEmail: string): Promise<{ success: boolean; error?: string }> => {
   try {
     const collectionName = visibility === 'global' ? 'global_polls' : 'class_polls';
-    const pollRef = doc(db, collectionName, pollId);
+    const pollRef = doc(db, 'itm', 'data', collectionName, pollId);
     
     // Get current poll data
     const pollDoc = await getDoc(pollRef);
