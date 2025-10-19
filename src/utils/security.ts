@@ -12,9 +12,7 @@ export const validateEmail = (email: string): { isValid: boolean; error?: string
     return { isValid: false, error: 'Please enter a valid email address' };
   }
   
-  if (!email.endsWith('@isu.ac.in')) {
-    return { isValid: false, error: 'Only ISU email addresses are allowed' };
-  }
+ 
   
   return { isValid: true };
 };

@@ -1,5 +1,8 @@
-import { User, FileText, BarChart3, MessageSquare, Key, LogOut } from 'lucide-react';
+import { User, FileText, BarChart3, MessageSquare, Key, LogOut, Wallet, Copy } from 'lucide-react';
 import BottomNav from '../components/BottomNav';
+import { useState, useEffect } from 'react';
+import { getUserData } from '../services/authService';
+import { formatWalletAddress } from '../utils/walletUtils';
 
 interface MePageProps {
   email: string;
@@ -14,6 +17,38 @@ const MOCK_USER_POSTS = [
 ];
 
 export default function MePage({ email, onNavigate, onLogout }: MePageProps) {
+  const [walletAddress, setWalletAddress] = useState<string>('');
+  const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    const fetchUserData = async () => {
+      if (email) {
+        try {
+          const userData = await getUserData(email);
+          if (userData?.walletAddress) {
+            setWalletAddress(userData.walletAddress);
+          }
+        } catch (error) {
+          console.error('Error fetching user data:', error);
+        }
+      }
+    };
+
+    fetchUserData();
+  }, [email]);
+
+  const handleCopyWallet = async () => {
+    if (walletAddress) {
+      try {
+        await navigator.clipboard.writeText(walletAddress);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      } catch (error) {
+        console.error('Failed to copy wallet address:', error);
+      }
+    }
+  };
+
   const handleRegenerateSeed = () => {
     alert('Seed phrase regeneration would be implemented here');
   };
@@ -84,6 +119,37 @@ export default function MePage({ email, onNavigate, onLogout }: MePageProps) {
             </div>
           </div>
         </div>
+
+        {walletAddress && (
+          <div className="bg-gradient-to-br from-[#0A0A0A] to-[#1A1A1A] border border-[#1A1A1A] rounded-xl p-6 mb-6">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 bg-[#F97171]/20 rounded-full flex items-center justify-center">
+                <Wallet className="w-5 h-5 text-[#F97171]" />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-white">Wallet Address</h3>
+                <p className="text-[#9DA3AF] text-sm">Your unique 16-character wallet ID</p>
+              </div>
+            </div>
+            
+            <div className="bg-[#1A1A1A] rounded-lg p-4 flex items-center justify-between">
+              <div>
+                <p className="text-white font-mono text-sm mb-1">{formatWalletAddress(walletAddress)}</p>
+                <p className="text-[#9DA3AF] text-xs">Tap to copy</p>
+              </div>
+              <button
+                onClick={handleCopyWallet}
+                className="p-2 bg-[#F97171]/10 hover:bg-[#F97171]/20 border border-[#F97171]/30 text-[#F97171] rounded-lg transition-all"
+              >
+                <Copy className="w-4 h-4" />
+              </button>
+            </div>
+            
+            {copied && (
+              <p className="text-[#F97171] text-sm mt-2 text-center">Wallet address copied!</p>
+            )}
+          </div>
+        )}
 
         <div className="space-y-3 mb-6">
           <h3 className="text-lg font-semibold text-white mb-4">Your Posts</h3>

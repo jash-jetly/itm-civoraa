@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import { ArrowLeft, FileText, BarChart3, MessageSquare, Plus, Globe, GraduationCap } from 'lucide-react';
 import BottomNav from '../components/BottomNav';
+import { createPoll } from '../services/pollService';
 
 interface CreatePageProps {
   onNavigate: (page: 'home' | 'local' | 'create' | 'wallet' | 'me') => void;
+  email: string;
 }
 
 type CreateType = 'issue' | 'poll' | 'discussion' | null;
@@ -12,34 +14,26 @@ const CLASSES = [
   {
     id: 1,
     name: 'Sam Altman',
-    subject: 'Entrepreneurship & AI',
-    time: '10:00 AM - 11:30 AM',
-    room: 'Hall A-101'
+    year:'2025'
   },
   {
     id: 2,
     name: 'Larry Page',
-    subject: 'Innovation & Technology',
-    time: '2:00 PM - 3:30 PM',
-    room: 'Hall B-205'
+    year:'2025'
   },
   {
     id: 3,
     name: 'Demis Hassabis',
-    subject: 'AI & Machine Learning',
-    time: '11:45 AM - 1:15 PM',
-    room: 'Lab C-301'
+    year:'2025'
   },
   {
     id: 4,
     name: 'Jeff Bezos',
-    subject: 'Business Strategy',
-    time: '4:00 PM - 5:30 PM',
-    room: 'Hall D-102'
+    year:'2025'
   }
 ];
 
-export default function CreatePage({ onNavigate }: CreatePageProps) {
+export default function CreatePage({ onNavigate, email }: CreatePageProps) {
   const [selectedType, setSelectedType] = useState<CreateType>(null);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -48,6 +42,8 @@ export default function CreatePage({ onNavigate }: CreatePageProps) {
   const [visibility, setVisibility] = useState<'global' | 'class'>('global');
   const [selectedClass, setSelectedClass] = useState<number | null>(null);
   const [tags, setTags] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   const addPollOption = () => {
     setPollOptions([...pollOptions, '']);
@@ -65,26 +61,49 @@ export default function CreatePage({ onNavigate }: CreatePageProps) {
     }
   };
 
-  const handleSubmit = () => {
-    console.log({ 
-      selectedType, 
-      title, 
-      description, 
-      isAnonymous, 
-      pollOptions: selectedType === 'poll' ? pollOptions : undefined,
-      visibility,
-      selectedClass: visibility === 'class' ? selectedClass : undefined,
-      tags
-    });
-    setTitle('');
-    setDescription('');
-    setIsAnonymous(false);
-    setPollOptions(['', '']);
-    setVisibility('global');
-    setSelectedClass(null);
-    setTags('');
-    setSelectedType(null);
-    onNavigate('home');
+  const handleSubmit = async () => {
+    if (!selectedType || !title.trim()) return;
+    
+    setIsSubmitting(true);
+    setSubmitError(null);
+
+    try {
+      // Get the selected class name if class visibility is selected
+      const selectedClassData = selectedClass ? CLASSES.find(c => c.id === selectedClass) : null;
+      
+      const result = await createPoll({
+        title,
+        description: selectedType !== 'poll' ? description : undefined,
+        options: selectedType === 'poll' ? pollOptions.filter(opt => opt.trim()) : undefined,
+        authorEmail: email,
+        isAnonymous,
+        visibility,
+        classId: visibility === 'class' ? selectedClass || undefined : undefined,
+        className: visibility === 'class' && selectedClassData ? selectedClassData.name : undefined,
+        tags,
+        type: selectedType
+      });
+
+      if (result.success) {
+        // Reset form
+        setTitle('');
+        setDescription('');
+        setIsAnonymous(false);
+        setPollOptions(['', '']);
+        setVisibility('global');
+        setSelectedClass(null);
+        setTags('');
+        setSelectedType(null);
+        onNavigate('home');
+      } else {
+        setSubmitError(result.error || 'Failed to create post');
+      }
+    } catch (error) {
+      setSubmitError('An unexpected error occurred');
+      console.error('Error submitting post:', error);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   if (!selectedType) {
@@ -258,8 +277,7 @@ export default function CreatePage({ onNavigate }: CreatePageProps) {
                   }`}
                 >
                   <div className="font-medium">{classItem.name}</div>
-                  <div className="text-sm opacity-70">{classItem.subject}</div>
-                  <div className="text-xs opacity-50">{classItem.time} • {classItem.room}</div>
+                  <div className="text-sm opacity-70">{classItem.year}</div>
                 </button>
               ))}
             </div>
@@ -316,12 +334,18 @@ export default function CreatePage({ onNavigate }: CreatePageProps) {
           </div>
         </label>
 
+        {submitError && (
+          <div className="p-4 bg-red-500/10 border border-red-500/30 rounded-xl">
+            <p className="text-red-400 text-sm">{submitError}</p>
+          </div>
+        )}
+
         <button
           onClick={handleSubmit}
-          disabled={!title || !description}
+          disabled={!title.trim() || (selectedType !== 'poll' && !description.trim()) || (selectedType === 'poll' && pollOptions.filter(opt => opt.trim()).length < 2) || (visibility === 'class' && !selectedClass) || isSubmitting}
           className="w-full py-4 bg-[#F97171] hover:bg-[#F97171]/90 disabled:bg-[#F97171]/30 disabled:cursor-not-allowed text-black font-semibold rounded-xl transition-all shadow-[0_0_30px_rgba(249,113,113,0.3)] hover:shadow-[0_0_40px_rgba(249,113,113,0.5)] active:scale-[0.98]"
         >
-          Post
+          {isSubmitting ? 'Posting...' : 'Post'}
         </button>
       </div>
 

@@ -22,11 +22,13 @@ import {
   sanitizeInput,
   sanitizeErrorMessage
 } from '../utils/security';
+import { generateWalletAddress } from '../utils/walletUtils';
 
 export interface UserData {
   email: string;
   createdAt: any;
   lastLogin: any;
+  walletAddress: string;
   seedPhraseVerified?: boolean;
   registrationStep?: 'email' | 'otp' | 'password' | 'seed_phrase' | 'completed';
 }
@@ -60,7 +62,8 @@ export const registerUser = async (email: string, password: string): Promise<Use
     const userData: UserData = {
       email: email,
       createdAt: serverTimestamp(),
-      lastLogin: serverTimestamp()
+      lastLogin: serverTimestamp(),
+      walletAddress: generateWalletAddress()
     };
 
     await setDoc(doc(db, 'itm', email), userData);
@@ -342,6 +345,7 @@ export const completeRegistration = async (): Promise<AuthFlowResult> => {
       email: tempEmail,
       createdAt: serverTimestamp(),
       lastLogin: serverTimestamp(),
+      walletAddress: generateWalletAddress(),
       seedPhraseVerified: true,
       registrationStep: 'completed'
     };

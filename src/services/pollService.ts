@@ -1,0 +1,300 @@
+import { 
+  collection, 
+  addDoc, 
+  getDocs, 
+  query, 
+  orderBy, 
+  where, 
+  serverTimestamp,
+  Timestamp,
+  doc,
+  updateDoc,
+  getDoc
+} from 'firebase/firestore';
+import { db } from '../firebase';
+import { sanitizeInput } from '../utils/security';
+
+export interface PollOption {
+  id: string;
+  text: string;
+  votes: number;
+}
+
+export interface Poll {
+  id?: string;
+  title: string;
+  description?: string;
+  options: PollOption[];
+  authorEmail: string;
+  authorName?: string;
+  authorTag: string;
+  addressShort: string;
+  isAnonymous: boolean;
+  visibility: 'global' | 'class';
+  classId?: number;
+  className?: string;
+  tags?: string[];
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+  comments: number;
+  totalVotes: number;
+  type: 'poll' | 'discussion' | 'issue';
+}
+
+export interface CreatePollData {
+  title: string;
+  description?: string;
+  options?: string[];
+  authorEmail: string;
+  isAnonymous: boolean;
+  visibility: 'global' | 'class';
+  classId?: number;
+  className?: string;
+  tags?: string;
+  type: 'poll' | 'discussion' | 'issue';
+}
+
+// Generate a random author tag for anonymous posts
+const generateAuthorTag = (): string => {
+  const chars = '0123456789ABCDEF';
+  let result = '';
+  for (let i = 0; i < 2; i++) {
+    result += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return result;
+};
+
+// Generate a short address for display
+const generateAddressShort = (): string => {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  let result = '';
+  for (let i = 0; i < 8; i++) {
+    result += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return result;
+};
+
+// Function to parse username from email format like "2025.jashj@isu.ac.in"
+const parseUsername = (email: string): string => {
+  if (!email) return 'Anonymous';
+  
+  try {
+    // Split email by @ to get the local part
+    const localPart = email.split('@')[0];
+    
+    // Split by . to separate year and username
+    const parts = localPart.split('.');
+    
+    if (parts.length >= 2) {
+      // Get the username part (everything after the first dot)
+      const usernamePart = parts.slice(1).join('.');
+      
+      // Insert space before capital letters and format properly
+      const formattedUsername = usernamePart
+        .replace(/([a-z])([A-Z])/g, '$1 $2') // Add space before capital letters
+        .split(' ')
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+        .join(' ');
+      
+      return formattedUsername;
+    }
+    
+    // Fallback: use the whole local part
+    return localPart;
+  } catch (error) {
+    return 'Anonymous';
+  }
+};
+
+// Create a new poll
+export const createPoll = async (pollData: CreatePollData): Promise<{ success: boolean; pollId?: string; error?: string }> => {
+  try {
+    // Sanitize inputs
+    const sanitizedTitle = sanitizeInput(pollData.title);
+    const sanitizedDescription = pollData.description ? sanitizeInput(pollData.description) : '';
+    
+    if (!sanitizedTitle.trim()) {
+      return { success: false, error: 'Title is required' };
+    }
+
+    // Process poll options for polls
+    let processedOptions: PollOption[] = [];
+    if (pollData.type === 'poll' && pollData.options) {
+      processedOptions = pollData.options
+        .filter(option => option.trim())
+        .map((option, index) => ({
+          id: `opt${index + 1}`,
+          text: sanitizeInput(option),
+          votes: 0
+        }));
+
+      if (processedOptions.length < 2) {
+        return { success: false, error: 'At least 2 poll options are required' };
+      }
+    }
+
+    // Process tags
+    const processedTags = pollData.tags 
+      ? pollData.tags.split(',').map(tag => sanitizeInput(tag.trim())).filter(tag => tag)
+      : [];
+
+    // Create poll object
+    const poll: any = {
+      title: sanitizedTitle,
+      options: processedOptions,
+      authorEmail: pollData.isAnonymous ? 'anonymous' : pollData.authorEmail,
+      authorTag: generateAuthorTag(),
+      addressShort: generateAddressShort(),
+      isAnonymous: pollData.isAnonymous,
+      visibility: pollData.visibility,
+      tags: processedTags,
+      createdAt: serverTimestamp() as Timestamp,
+      updatedAt: serverTimestamp() as Timestamp,
+      comments: 0,
+      totalVotes: 0,
+      type: pollData.type
+    };
+
+    // Add authorName for non-anonymous polls
+    if (!pollData.isAnonymous) {
+      poll.authorName = parseUsername(pollData.authorEmail);
+    }
+
+    // Only add optional fields if they have values
+    if (sanitizedDescription && sanitizedDescription.trim()) {
+      poll.description = sanitizedDescription;
+    }
+    if (pollData.classId !== undefined && pollData.classId !== null) {
+      poll.classId = pollData.classId;
+    }
+    if (pollData.className !== undefined && pollData.className !== null) {
+      poll.className = pollData.className;
+    }
+
+    // Determine collection based on visibility
+    const collectionName = pollData.visibility === 'global' ? 'global_polls' : 'class_polls';
+    
+    // Add to Firestore
+    const docRef = await addDoc(collection(db, collectionName), poll);
+    
+    return { success: true, pollId: docRef.id };
+  } catch (error) {
+    console.error('Error creating poll:', error);
+    return { success: false, error: 'Failed to create poll. Please try again.' };
+  }
+};
+
+// Get global polls
+export const getGlobalPolls = async (): Promise<{ success: boolean; polls?: Poll[]; error?: string }> => {
+  try {
+    const q = query(
+      collection(db, 'global_polls'),
+      orderBy('createdAt', 'desc')
+    );
+    
+    const querySnapshot = await getDocs(q);
+    const polls: Poll[] = [];
+    
+    querySnapshot.forEach((doc) => {
+      polls.push({
+        id: doc.id,
+        ...doc.data()
+      } as Poll);
+    });
+    
+    return { success: true, polls };
+  } catch (error) {
+    console.error('Error fetching global polls:', error);
+    return { success: false, error: 'Failed to fetch polls' };
+  }
+};
+
+// Get class-specific polls
+export const getClassPolls = async (classId: number): Promise<{ success: boolean; polls?: Poll[]; error?: string }> => {
+  try {
+    const q = query(
+      collection(db, 'class_polls'),
+      where('classId', '==', classId),
+      orderBy('createdAt', 'desc')
+    );
+    
+    const querySnapshot = await getDocs(q);
+    const polls: Poll[] = [];
+    
+    querySnapshot.forEach((doc) => {
+      polls.push({
+        id: doc.id,
+        ...doc.data()
+      } as Poll);
+    });
+    
+    return { success: true, polls };
+  } catch (error) {
+    console.error('Error fetching class polls:', error);
+    return { success: false, error: 'Failed to fetch class polls' };
+  }
+};
+
+// Get all polls for a specific class
+export const getAllClassPolls = async (): Promise<{ success: boolean; polls?: Poll[]; error?: string }> => {
+  try {
+    const q = query(
+      collection(db, 'class_polls'),
+      orderBy('createdAt', 'desc')
+    );
+    
+    const querySnapshot = await getDocs(q);
+    const polls: Poll[] = [];
+    
+    querySnapshot.forEach((doc) => {
+      polls.push({
+        id: doc.id,
+        ...doc.data()
+      } as Poll);
+    });
+    
+    return { success: true, polls };
+  } catch (error) {
+    console.error('Error fetching all class polls:', error);
+    return { success: false, error: 'Failed to fetch class polls' };
+  }
+};
+
+// Vote on a poll
+export const voteOnPoll = async (pollId: string, optionId: string, visibility: 'global' | 'class'): Promise<{ success: boolean; error?: string }> => {
+  try {
+    const collectionName = visibility === 'global' ? 'global_polls' : 'class_polls';
+    const pollRef = doc(db, collectionName, pollId);
+    
+    // Get current poll data
+    const pollDoc = await getDoc(pollRef);
+    if (!pollDoc.exists()) {
+      return { success: false, error: 'Poll not found' };
+    }
+    
+    const pollData = pollDoc.data() as Poll;
+    
+    // Update the specific option's vote count
+    const updatedOptions = pollData.options.map(option => {
+      if (option.id === optionId) {
+        return { ...option, votes: option.votes + 1 };
+      }
+      return option;
+    });
+    
+    // Calculate new total votes
+    const newTotalVotes = updatedOptions.reduce((total, option) => total + option.votes, 0);
+    
+    // Update the poll document
+    await updateDoc(pollRef, {
+      options: updatedOptions,
+      totalVotes: newTotalVotes,
+      updatedAt: serverTimestamp()
+    });
+    
+    return { success: true };
+  } catch (error) {
+    console.error('Error voting on poll:', error);
+    return { success: false, error: 'Failed to submit vote' };
+  }
+};

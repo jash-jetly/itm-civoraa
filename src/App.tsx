@@ -87,7 +87,7 @@ function App() {
       case 'inclass':
         return <InClassPage onNavigate={navigateTo} />;
       case 'create':
-        return <CreatePage onNavigate={navigateTo} />;
+        return <CreatePage onNavigate={navigateTo} email={email} />;
       case 'wallet':
         return <WalletPage onNavigate={navigateTo} />;
       case 'me':

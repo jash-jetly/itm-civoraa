@@ -1,6 +1,7 @@
-import { useState } from 'react';
-import { Trophy, Mail, MessageCircle, Share2, Plus } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Trophy, Mail, MessageCircle, Share2, Plus, BarChart3, FileText } from 'lucide-react';
 import BottomNav from '../components/BottomNav';
+import { getGlobalPolls, Poll, voteOnPoll } from '../services/pollService';
 
 interface HomePageProps {
   onNavigate: (page: 'home' | 'local' | 'inclass' | 'create' | 'wallet' | 'me') => void;
@@ -50,11 +51,89 @@ const MOCK_POLLS: PollItem[] = [
 
 export default function HomePage({ onNavigate }: HomePageProps) {
   const [scope, setScope] = useState<'global' | 'inclass'>('global');
-  const [selected, setSelected] = useState<Record<number, string>>({});
+  const [selected, setSelected] = useState<Record<string, string>>({});
+  const [polls, setPolls] = useState<Poll[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [voting, setVoting] = useState<Record<string, boolean>>({});
 
   const handleScope = (value: 'global' | 'inclass') => {
     setScope(value);
     if (value === 'inclass') onNavigate('inclass');
+  };
+
+  const loadGlobalPolls = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const result = await getGlobalPolls();
+      if (result.success && result.polls) {
+        setPolls(result.polls);
+      } else {
+        setError(result.error || 'Failed to load polls');
+      }
+    } catch (err) {
+      setError('An unexpected error occurred');
+      console.error('Error loading polls:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (scope === 'global') {
+      loadGlobalPolls();
+    }
+  }, [scope]);
+
+  const formatTimeAgo = (timestamp: any): string => {
+    if (!timestamp) return 'Just now';
+    
+    const now = new Date();
+    const postTime = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+    const diffInSeconds = Math.floor((now.getTime() - postTime.getTime()) / 1000);
+    
+    if (diffInSeconds < 60) return 'Just now';
+    if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
+    if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
+    return `${Math.floor(diffInSeconds / 86400)}d ago`;
+  };
+
+  const handleVote = async (pollId: string, optionId: string) => {
+    if (!pollId || voting[pollId]) return;
+    
+    setVoting(prev => ({ ...prev, [pollId]: true }));
+    
+    try {
+      const result = await voteOnPoll(pollId, optionId, 'global');
+      if (result.success) {
+        // Update local state to reflect the vote
+        setPolls(prevPolls => 
+          prevPolls.map(poll => {
+            if (poll.id === pollId) {
+              const updatedOptions = poll.options.map(option => {
+                if (option.id === optionId) {
+                  return { ...option, votes: option.votes + 1 };
+                }
+                return option;
+              });
+              const newTotalVotes = updatedOptions.reduce((total, option) => total + option.votes, 0);
+              return { ...poll, options: updatedOptions, totalVotes: newTotalVotes };
+            }
+            return poll;
+          })
+        );
+        
+        // Update selected state
+        setSelected(prev => ({ ...prev, [pollId]: optionId }));
+      } else {
+        console.error('Failed to vote:', result.error);
+      }
+    } catch (error) {
+      console.error('Error voting:', error);
+    } finally {
+      setVoting(prev => ({ ...prev, [pollId]: false }));
+    }
   };
 
   return (
@@ -95,17 +174,134 @@ export default function HomePage({ onNavigate }: HomePageProps) {
         </div>
       </div>
 
-      {/* Feed - Empty State */}
-      <div className="px-4 py-8 flex flex-col items-center justify-center min-h-[400px]">
-        <div className="text-center space-y-4">
-          <div className="w-16 h-16 rounded-full bg-[#F97171]/10 flex items-center justify-center mx-auto">
-            <MessageCircle className="w-8 h-8 text-[#F97171]" />
+      {/* Feed Content */}
+      <div className="px-4 py-6">
+        {loading ? (
+          <div className="flex flex-col items-center justify-center min-h-[400px]">
+            <div className="w-8 h-8 border-2 border-[#F97171] border-t-transparent rounded-full animate-spin mb-4"></div>
+            <p className="text-[#9DA3AF] text-sm">Loading posts...</p>
           </div>
-          <h3 className="text-white font-semibold text-lg">No polls yet</h3>
-          <p className="text-[#9DA3AF] text-sm max-w-sm">
-            Be the first to create a poll and start the conversation in your community.
-          </p>
-        </div>
+        ) : error ? (
+          <div className="flex flex-col items-center justify-center min-h-[400px]">
+            <div className="w-16 h-16 rounded-full bg-red-500/10 flex items-center justify-center mx-auto mb-4">
+              <MessageCircle className="w-8 h-8 text-red-400" />
+            </div>
+            <h3 className="text-white font-semibold text-lg mb-2">Error loading posts</h3>
+            <p className="text-[#9DA3AF] text-sm mb-4">{error}</p>
+            <button 
+              onClick={loadGlobalPolls}
+              className="px-4 py-2 bg-[#F97171] text-black rounded-lg font-medium"
+            >
+              Try Again
+            </button>
+          </div>
+        ) : polls.length === 0 ? (
+          <div className="flex flex-col items-center justify-center min-h-[400px]">
+            <div className="w-16 h-16 rounded-full bg-[#F97171]/10 flex items-center justify-center mx-auto mb-4">
+              <MessageCircle className="w-8 h-8 text-[#F97171]" />
+            </div>
+            <h3 className="text-white font-semibold text-lg mb-2">No posts yet</h3>
+            <p className="text-[#9DA3AF] text-sm max-w-sm text-center">
+              Be the first to create a post and start the conversation in your community.
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {polls.map((poll) => (
+              <div
+                key={poll.id}
+                className="bg-gradient-to-br from-[#0A0A0A] to-[#1A1A1A] border border-[#1A1A1A] hover:border-[#F97171]/30 rounded-xl p-6 transition-all"
+              >
+                <div className="flex items-start gap-3 mb-4">
+                  <div className="p-2 rounded-lg bg-[#F97171]/10">
+                    {poll.type === 'poll' && <BarChart3 className="w-5 h-5 text-[#F97171]" />}
+                    {poll.type === 'discussion' && <MessageCircle className="w-5 h-5 text-[#F97171]" />}
+                    {poll.type === 'issue' && <FileText className="w-5 h-5 text-[#F97171]" />}
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="text-[#F97171] font-medium">
+                        {poll.isAnonymous ? poll.authorTag : poll.authorName || 'Unknown User'}
+                      </span>
+                      <span className="text-[#9DA3AF] text-sm">{poll.addressShort}</span>
+                      <span className="text-[#9DA3AF] text-sm">•</span>
+                      <span className="text-[#9DA3AF] text-sm">{formatTimeAgo(poll.createdAt)}</span>
+                    </div>
+                    <h3 className="text-white font-semibold mb-3">{poll.title}</h3>
+                    
+                    {poll.type === 'poll' && poll.options && (
+                      <div className="space-y-2 mb-4">
+                        {poll.options.map((option) => {
+                          const pollId = poll.id;
+                          const isSelected = pollId && selected[pollId] === option.id;
+                          const percentage = poll.totalVotes > 0 ? (option.votes / poll.totalVotes) * 100 : 0;
+                          const isVoting = pollId && voting[pollId];
+                          
+                          return (
+                            <div
+                              key={option.id}
+                              className={`relative p-3 rounded-lg border cursor-pointer transition-all ${
+                                isSelected 
+                                  ? 'border-[#F97171] bg-[#F97171]/10' 
+                                  : 'border-[#1A1A1A] bg-[#0A0A0A] hover:border-[#F97171]/30'
+                              } ${isVoting ? 'opacity-50 cursor-not-allowed' : ''}`}
+                              onClick={() => {
+                                if (pollId && !isVoting && !isSelected) {
+                                  handleVote(pollId, option.id);
+                                }
+                              }}
+                            >
+                              <div className="flex justify-between items-center relative z-10">
+                                <span className="text-white text-sm">{option.text}</span>
+                                <span className="text-[#9DA3AF] text-sm">
+                                  {isVoting ? 'Voting...' : `${option.votes} votes`}
+                                </span>
+                              </div>
+                              {percentage > 0 && (
+                                <div 
+                                  className="absolute inset-0 bg-[#F97171]/20 rounded-lg transition-all duration-300"
+                                  style={{ width: `${percentage}%` }}
+                                />
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+
+                    {poll.type !== 'poll' && poll.description && (
+                      <p className="text-[#9DA3AF] mb-4">{poll.description}</p>
+                    )}
+
+                    {poll.tags && poll.tags.length > 0 && (
+                      <div className="flex flex-wrap gap-2 mb-4">
+                        {poll.tags.map((tag, index) => (
+                          <span
+                            key={index}
+                            className="px-2 py-1 bg-[#F97171]/10 text-[#F97171] text-xs rounded-full"
+                          >
+                            #{tag}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+
+                    <div className="flex items-center gap-4 text-[#9DA3AF] text-sm">
+                      <div className="flex items-center gap-1">
+                        <MessageCircle className="w-4 h-4" />
+                        <span>{poll.comments}</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Share2 className="w-4 h-4" />
+                        <span>Share</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Floating create button */}
