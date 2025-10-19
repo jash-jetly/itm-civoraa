@@ -65,6 +65,9 @@ export default function LocalPage({ onNavigate }: LocalPageProps) {
   const [selectedNews, setSelectedNews] = useState<any>(null);
   const [chatMessages, setChatMessages] = useState<any[]>([]);
   const [newMessage, setNewMessage] = useState('');
+  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState(false);
 
   const handleSwipe = (direction: 'left' | 'right' | 'up') => {
     if (direction === 'up') {
@@ -76,6 +79,76 @@ export default function LocalPage({ onNavigate }: LocalPageProps) {
         setCurrentCardIndex(currentCardIndex + 1);
       }
     }
+  };
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    const touch = e.touches[0];
+    setDragStart({ x: touch.clientX, y: touch.clientY });
+    setIsDragging(true);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!isDragging) return;
+    const touch = e.touches[0];
+    const deltaX = touch.clientX - dragStart.x;
+    const deltaY = touch.clientY - dragStart.y;
+    setDragOffset({ x: deltaX, y: deltaY });
+  };
+
+  const handleTouchEnd = () => {
+    if (!isDragging) return;
+    
+    const threshold = 100;
+    const { x, y } = dragOffset;
+    
+    if (Math.abs(x) > Math.abs(y)) {
+      // Horizontal swipe
+      if (Math.abs(x) > threshold) {
+        handleSwipe(x > 0 ? 'right' : 'left');
+      }
+    } else {
+      // Vertical swipe
+      if (y < -threshold) {
+        handleSwipe('up');
+      }
+    }
+    
+    setDragOffset({ x: 0, y: 0 });
+    setIsDragging(false);
+  };
+
+  const handleMouseStart = (e: React.MouseEvent) => {
+    setDragStart({ x: e.clientX, y: e.clientY });
+    setIsDragging(true);
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isDragging) return;
+    const deltaX = e.clientX - dragStart.x;
+    const deltaY = e.clientY - dragStart.y;
+    setDragOffset({ x: deltaX, y: deltaY });
+  };
+
+  const handleMouseEnd = () => {
+    if (!isDragging) return;
+    
+    const threshold = 100;
+    const { x, y } = dragOffset;
+    
+    if (Math.abs(x) > Math.abs(y)) {
+      // Horizontal swipe
+      if (Math.abs(x) > threshold) {
+        handleSwipe(x > 0 ? 'right' : 'left');
+      }
+    } else {
+      // Vertical swipe
+      if (y < -threshold) {
+        handleSwipe('up');
+      }
+    }
+    
+    setDragOffset({ x: 0, y: 0 });
+    setIsDragging(false);
   };
 
   const sendMessage = () => {
@@ -113,10 +186,23 @@ export default function LocalPage({ onNavigate }: LocalPageProps) {
       </div>
 
       {/* News Card */}
-      <div className="px-6 flex-1 flex items-center justify-center">
-        <div className="w-full max-w-sm mx-auto">
-          <div className="bg-gradient-to-br from-[#0A0A0A] to-[#1A1A1A] border border-[#1A1A1A] rounded-2xl overflow-hidden shadow-2xl">
-            {/* News Image */}
+       <div className="px-6 flex-1 flex items-center justify-center">
+         <div className="w-full max-w-sm mx-auto">
+           <div 
+              className="bg-gradient-to-br from-[#0A0A0A] to-[#1A1A1A] border border-[#1A1A1A] rounded-2xl overflow-hidden shadow-2xl cursor-grab active:cursor-grabbing transition-transform duration-200"
+              style={{
+                transform: `translate(${dragOffset.x}px, ${dragOffset.y}px) rotate(${dragOffset.x * 0.1}deg)`,
+                opacity: isDragging ? 0.9 : 1
+              }}
+              onTouchStart={handleTouchStart}
+              onTouchMove={handleTouchMove}
+              onTouchEnd={handleTouchEnd}
+              onMouseDown={handleMouseStart}
+              onMouseMove={isDragging ? handleMouseMove : undefined}
+              onMouseUp={handleMouseEnd}
+              onMouseLeave={handleMouseEnd}
+            >
+             {/* News Image */}
             <div className="h-64 bg-gradient-to-br from-[#F97171]/20 to-[#9DA3AF]/20 flex items-center justify-center">
               <img 
                 src="https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=400&h=300&fit=crop" 

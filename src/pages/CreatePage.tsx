@@ -321,7 +321,7 @@ export default function CreatePage({ onNavigate }: CreatePageProps) {
           disabled={!title || !description}
           className="w-full py-4 bg-[#F97171] hover:bg-[#F97171]/90 disabled:bg-[#F97171]/30 disabled:cursor-not-allowed text-black font-semibold rounded-xl transition-all shadow-[0_0_30px_rgba(249,113,113,0.3)] hover:shadow-[0_0_40px_rgba(249,113,113,0.5)] active:scale-[0.98]"
         >
-          Submit to Blockchain
+          Post
         </button>
       </div>
 

@@ -1,4 +1,4 @@
-import { Wallet, TrendingUp, Gift, ArrowUpRight, ArrowDownLeft } from 'lucide-react';
+import { Wallet, Gift, TrendingUp, ArrowDownLeft, ArrowUpRight, Copy, Check } from 'lucide-react';
 import BottomNav from '../components/BottomNav';
 
 interface WalletPageProps {
@@ -6,89 +6,107 @@ interface WalletPageProps {
 }
 
 const MOCK_TRANSACTIONS = [
-  { id: 1, type: 'earned', description: 'Issue upvoted 50 times', amount: 25, timestamp: '2h ago' },
-  { id: 2, type: 'earned', description: 'Poll created', amount: 10, timestamp: '1d ago' },
-  { id: 3, type: 'redeemed', description: 'Canteen voucher', amount: -50, timestamp: '2d ago' },
-  { id: 4, type: 'earned', description: 'Discussion engagement', amount: 15, timestamp: '3d ago' },
-  { id: 5, type: 'earned', description: 'Issue resolved', amount: 50, timestamp: '5d ago' }
+  { id: 1, type: 'earned', description: 'Poll participation reward', amount: 25.00, timestamp: '2024-08-25', status: 'completed' },
+  { id: 2, type: 'earned', description: 'Weekly active user bonus', amount: 50.00, timestamp: '2024-08-24', status: 'completed' },
+  { id: 3, type: 'spent', description: 'Premium poll creation', amount: -10.00, timestamp: '2024-08-23', status: 'completed' }
 ];
 
 export default function WalletPage({ onNavigate }: WalletPageProps) {
-  const balance = 150;
-  const totalEarned = 350;
+  const balance = 1247.50;
+  const balanceInRupees = 45.20;
 
   return (
     <div className="min-h-screen bg-black pb-20">
-      <div className="px-6 pt-8 pb-6 border-b border-[#1A1A1A] sticky top-0 bg-black/95 backdrop-blur-xl z-40">
-        <h1 className="text-2xl font-bold mb-1">Wallet</h1>
-        <p className="text-[#9DA3AF] text-sm">Your rewards and transactions</p>
+      {/* Header */}
+      <div className="px-6 pt-8 pb-4 text-center">
+        <h1 className="text-2xl font-bold text-white mb-1">Civoraa Wallet</h1>
+        <p className="text-[#9DA3AF] text-sm">Your crypto rewards & balance</p>
       </div>
 
-      <div className="px-6 py-6">
-        <div className="bg-gradient-to-br from-[#F97171] to-[#F97171]/80 rounded-2xl p-6 shadow-[0_0_50px_rgba(249,113,113,0.3)] mb-6">
-          <div className="flex items-center gap-2 text-black/70 text-sm mb-2">
-            <Wallet className="w-4 h-4" />
-            <span>Available Balance</span>
+      <div className="px-6 py-6 space-y-6">
+        {/* Main Balance Card */}
+        <div className="bg-gradient-to-br from-[#8B4513] to-[#654321] rounded-2xl p-6 shadow-2xl">
+          <div className="text-center mb-4">
+            <p className="text-white/80 text-sm mb-2">Total Balance</p>
+            <h2 className="text-4xl font-bold text-white mb-2">{balance.toFixed(2)} CVR</h2>
+            <p className="text-white/60 text-sm">≈ ₹{balanceInRupees.toFixed(2)}</p>
           </div>
-          <div className="text-4xl font-bold text-black mb-4">{balance} Points</div>
-          <button className="w-full py-3 bg-black hover:bg-black/90 text-white font-semibold rounded-xl transition-all active:scale-[0.98] flex items-center justify-center gap-2">
-            <Gift className="w-5 h-5" />
-            Redeem Rewards
+        </div>
+
+        {/* Wallet Address */}
+        <div className="bg-gradient-to-br from-[#0A0A0A] to-[#1A1A1A] border border-[#1A1A1A] rounded-xl p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-[#9DA3AF] text-sm mb-1">Wallet Address</p>
+              <p className="text-white font-mono text-sm">0xA182...6789</p>
+            </div>
+            <button className="p-2 bg-[#1A1A1A] hover:bg-[#2A2A2A] rounded-lg transition-colors">
+              <Copy className="w-4 h-4 text-[#9DA3AF]" />
+            </button>
+          </div>
+        </div>
+
+        {/* Action Buttons */}
+        <div className="grid grid-cols-2 gap-4">
+          <button className="bg-green-600/20 hover:bg-green-600/30 border border-green-600/50 rounded-xl p-4 flex flex-col items-center gap-2 transition-all">
+            <ArrowDownLeft className="w-6 h-6 text-green-400" />
+            <span className="text-white font-medium">Receive</span>
+          </button>
+          <button className="bg-blue-600/20 hover:bg-blue-600/30 border border-blue-600/50 rounded-xl p-4 flex flex-col items-center gap-2 transition-all">
+            <ArrowUpRight className="w-6 h-6 text-blue-400" />
+            <span className="text-white font-medium">Send</span>
           </button>
         </div>
 
-        <div className="grid grid-cols-2 gap-4 mb-6">
-          <div className="bg-gradient-to-br from-[#0A0A0A] to-[#1A1A1A] border border-[#1A1A1A] rounded-xl p-4">
-            <div className="flex items-center gap-2 text-[#9DA3AF] text-xs mb-2">
-              <TrendingUp className="w-4 h-4" />
-              <span>Total Earned</span>
+        {/* Rewards Section */}
+        <div className="bg-gradient-to-br from-purple-900/20 to-purple-800/20 border border-purple-500/30 rounded-xl p-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-purple-500/20 rounded-lg">
+                <Gift className="w-5 h-5 text-purple-400" />
+              </div>
+              <div>
+                <p className="text-white font-medium">Rewards & Vouchers</p>
+                <p className="text-[#9DA3AF] text-sm">Earn rewards by participating in polls and discussions!</p>
+              </div>
             </div>
-            <div className="text-2xl font-bold text-white">{totalEarned}</div>
-          </div>
-
-          <div className="bg-gradient-to-br from-[#0A0A0A] to-[#1A1A1A] border border-[#1A1A1A] rounded-xl p-4">
-            <div className="flex items-center gap-2 text-[#9DA3AF] text-xs mb-2">
-              <Gift className="w-4 h-4" />
-              <span>Redeemed</span>
+            <div className="text-right">
+              <p className="text-purple-400 font-bold">3 available</p>
             </div>
-            <div className="text-2xl font-bold text-white">{totalEarned - balance}</div>
           </div>
         </div>
 
-        <div className="space-y-3">
-          <h2 className="text-lg font-semibold text-white mb-4">Recent Transactions</h2>
-
-          {MOCK_TRANSACTIONS.map(transaction => (
-            <div
-              key={transaction.id}
-              className="bg-gradient-to-br from-[#0A0A0A] to-[#1A1A1A] border border-[#1A1A1A] rounded-xl p-4 flex items-center gap-4"
-            >
-              <div className={`p-2 rounded-lg ${
-                transaction.type === 'earned'
-                  ? 'bg-[#F97171]/20 text-[#F97171]'
-                  : 'bg-[#9DA3AF]/20 text-[#9DA3AF]'
-              }`}>
-                {transaction.type === 'earned' ? (
-                  <ArrowDownLeft className="w-5 h-5" />
-                ) : (
-                  <ArrowUpRight className="w-5 h-5" />
-                )}
+        {/* Recent Transactions */}
+        <div className="bg-[#0A0A0A] border border-[#1A1A1A] rounded-xl p-4">
+          <h3 className="text-lg font-semibold mb-4 text-white">Recent Transactions</h3>
+          <div className="space-y-3">
+            {MOCK_TRANSACTIONS.map((transaction) => (
+              <div key={transaction.id} className="flex items-center justify-between p-3 bg-[#1A1A1A] rounded-lg">
+                <div className="flex items-center gap-3">
+                  <div className={`p-2 rounded-lg ${
+                    transaction.status === 'completed' 
+                      ? 'bg-green-500/20' 
+                      : 'bg-red-500/20'
+                  }`}>
+                    {transaction.status === 'completed' ? (
+                      <Check className="w-4 h-4 text-green-400" />
+                    ) : (
+                      <ArrowUpRight className="w-4 h-4 text-red-400" />
+                    )}
+                  </div>
+                  <div>
+                    <p className="text-white font-medium text-sm">{transaction.description}</p>
+                    <p className="text-[#9DA3AF] text-xs">{transaction.timestamp}</p>
+                  </div>
+                </div>
+                <div className={`font-semibold text-sm ${
+                  transaction.type === 'earned' ? 'text-green-400' : 'text-red-400'
+                }`}>
+                  {transaction.type === 'earned' ? '+' : '-'}{transaction.amount} CVR
+                </div>
               </div>
-
-              <div className="flex-1">
-                <p className="text-white font-medium text-sm mb-1">
-                  {transaction.description}
-                </p>
-                <p className="text-[#9DA3AF] text-xs">{transaction.timestamp}</p>
-              </div>
-
-              <div className={`text-lg font-bold ${
-                transaction.type === 'earned' ? 'text-[#F97171]' : 'text-[#9DA3AF]'
-              }`}>
-                {transaction.amount > 0 ? '+' : ''}{transaction.amount}
-              </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       </div>
 
