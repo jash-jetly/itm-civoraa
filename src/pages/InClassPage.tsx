@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { GraduationCap, MessageCircle, BarChart3, FileText, Share2, ArrowLeft } from 'lucide-react';
 import BottomNav from '../components/BottomNav';
 import { getClassPolls, Poll, voteOnPoll } from '../services/pollService';
+import { getUserData } from '../services/authService';
 
 interface InClassPageProps {
   onNavigate: (page: 'home' | 'local' | 'create' | 'wallet' | 'me' | 'inclass') => void;
@@ -37,6 +38,7 @@ export default function InClassPage({ onNavigate }: InClassPageProps) {
   const [error, setError] = useState<string | null>(null);
   const [selected, setSelected] = useState<Record<string, string>>({});
   const [voting, setVoting] = useState<Record<string, boolean>>({});
+  const [userEmail, setUserEmail] = useState<string>('');
 
   const loadClassPolls = async (classId: number) => {
     setLoading(true);
@@ -61,6 +63,21 @@ export default function InClassPage({ onNavigate }: InClassPageProps) {
     loadClassPolls(classId);
   };
 
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        const email = localStorage.getItem('userEmail');
+        if (email) {
+          setUserEmail(email);
+        }
+      } catch (error) {
+        console.error('Error fetching user data:', error);
+      }
+    };
+    
+    fetchUserData();
+  }, []);
+
   const formatTimeAgo = (timestamp: any): string => {
     if (!timestamp) return 'Just now';
     
@@ -75,12 +92,12 @@ export default function InClassPage({ onNavigate }: InClassPageProps) {
   };
 
   const handleVote = async (pollId: string, optionId: string) => {
-    if (!pollId || voting[pollId]) return;
+    if (!pollId || voting[pollId] || !userEmail) return;
     
     setVoting(prev => ({ ...prev, [pollId]: true }));
     
     try {
-      const result = await voteOnPoll(pollId, optionId, 'class');
+      const result = await voteOnPoll(pollId, optionId, 'class', userEmail);
       if (result.success) {
         // Update local state to reflect the vote
         setPolls(prevPolls => 
@@ -200,25 +217,30 @@ export default function InClassPage({ onNavigate }: InClassPageProps) {
                       const pollId = poll.id || '';
                       const isSelected = pollId && selected[pollId] === option.text;
                       const isVoting = pollId && voting[pollId];
+                      const hasVoted = poll.votedUsers && poll.votedUsers.includes(userEmail);
 
                        return (
                          <button
                            key={index}
                            onClick={() => {
-                             if (pollId && !isVoting && !isSelected) {
+                             if (pollId && !isVoting && !hasVoted) {
                                handleVote(pollId, option.id || option.text);
                              }
                            }}
                           className={`w-full text-left p-4 rounded-lg border transition-all ${
                             isSelected
                               ? 'border-[#F97171] bg-[#F97171]/10'
-                              : 'border-[#1A1A1A] hover:border-[#F97171]/30 bg-[#0A0A0A]'
-                          } ${isVoting ? 'opacity-50 cursor-not-allowed' : ''}`}
+                              : 'border-[#1A1A1A] bg-[#0A0A0A]'
+                          } ${
+                            hasVoted || isVoting 
+                              ? 'opacity-50 cursor-not-allowed' 
+                              : 'hover:border-[#F97171]/30'
+                          }`}
                         >
                           <div className="flex justify-between items-center mb-2">
                             <span className="text-white font-medium">{option.text}</span>
                             <span className="text-[#9DA3AF] text-sm">
-                              {isVoting ? 'Voting...' : `${option.votes} votes`}
+                              {isVoting ? 'Voting...' : hasVoted ? 'Already voted' : `${option.votes} votes`}
                             </span>
                           </div>
                           <div className="w-full bg-[#1A1A1A] rounded-full h-2">

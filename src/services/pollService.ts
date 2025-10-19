@@ -39,6 +39,7 @@ export interface Poll {
   comments: number;
   totalVotes: number;
   type: 'poll' | 'discussion' | 'issue';
+  votedUsers: string[]; // Array of user emails who have voted
 }
 
 export interface CreatePollData {
@@ -152,7 +153,8 @@ export const createPoll = async (pollData: CreatePollData): Promise<{ success: b
       updatedAt: serverTimestamp() as Timestamp,
       comments: 0,
       totalVotes: 0,
-      type: pollData.type
+      type: pollData.type,
+      votedUsers: [] // Initialize empty array for tracking voters
     };
 
     // Add authorName for non-anonymous polls
@@ -261,7 +263,7 @@ export const getAllClassPolls = async (): Promise<{ success: boolean; polls?: Po
 };
 
 // Vote on a poll
-export const voteOnPoll = async (pollId: string, optionId: string, visibility: 'global' | 'class'): Promise<{ success: boolean; error?: string }> => {
+export const voteOnPoll = async (pollId: string, optionId: string, visibility: 'global' | 'class', userEmail: string): Promise<{ success: boolean; error?: string }> => {
   try {
     const collectionName = visibility === 'global' ? 'global_polls' : 'class_polls';
     const pollRef = doc(db, collectionName, pollId);
@@ -274,6 +276,11 @@ export const voteOnPoll = async (pollId: string, optionId: string, visibility: '
     
     const pollData = pollDoc.data() as Poll;
     
+    // Check if user has already voted
+    if (pollData.votedUsers && pollData.votedUsers.includes(userEmail)) {
+      return { success: false, error: 'You have already voted on this poll' };
+    }
+    
     // Update the specific option's vote count
     const updatedOptions = pollData.options.map(option => {
       if (option.id === optionId) {
@@ -285,10 +292,14 @@ export const voteOnPoll = async (pollId: string, optionId: string, visibility: '
     // Calculate new total votes
     const newTotalVotes = updatedOptions.reduce((total, option) => total + option.votes, 0);
     
+    // Add user to votedUsers array
+    const updatedVotedUsers = [...(pollData.votedUsers || []), userEmail];
+    
     // Update the poll document
     await updateDoc(pollRef, {
       options: updatedOptions,
       totalVotes: newTotalVotes,
+      votedUsers: updatedVotedUsers,
       updatedAt: serverTimestamp()
     });
     

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Trophy, Mail, MessageCircle, Share2, Plus, BarChart3, FileText } from 'lucide-react';
 import BottomNav from '../components/BottomNav';
 import { getGlobalPolls, Poll, voteOnPoll } from '../services/pollService';
+import { getUserData } from '../services/authService';
 
 interface HomePageProps {
   onNavigate: (page: 'home' | 'local' | 'inclass' | 'create' | 'wallet' | 'me') => void;
@@ -56,6 +57,7 @@ export default function HomePage({ onNavigate }: HomePageProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [voting, setVoting] = useState<Record<string, boolean>>({});
+  const [userEmail, setUserEmail] = useState<string>('');
 
   const handleScope = (value: 'global' | 'inclass') => {
     setScope(value);
@@ -86,6 +88,21 @@ export default function HomePage({ onNavigate }: HomePageProps) {
     }
   }, [scope]);
 
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        const email = localStorage.getItem('userEmail');
+        if (email) {
+          setUserEmail(email);
+        }
+      } catch (error) {
+        console.error('Error fetching user data:', error);
+      }
+    };
+    
+    fetchUserData();
+  }, []);
+
   const formatTimeAgo = (timestamp: any): string => {
     if (!timestamp) return 'Just now';
     
@@ -100,12 +117,12 @@ export default function HomePage({ onNavigate }: HomePageProps) {
   };
 
   const handleVote = async (pollId: string, optionId: string) => {
-    if (!pollId || voting[pollId]) return;
+    if (!pollId || voting[pollId] || !userEmail) return;
     
     setVoting(prev => ({ ...prev, [pollId]: true }));
     
     try {
-      const result = await voteOnPoll(pollId, optionId, 'global');
+      const result = await voteOnPoll(pollId, optionId, 'global', userEmail);
       if (result.success) {
         // Update local state to reflect the vote
         setPolls(prevPolls => 
@@ -236,17 +253,22 @@ export default function HomePage({ onNavigate }: HomePageProps) {
                           const isSelected = pollId && selected[pollId] === option.id;
                           const percentage = poll.totalVotes > 0 ? (option.votes / poll.totalVotes) * 100 : 0;
                           const isVoting = pollId && voting[pollId];
+                          const hasVoted = poll.votedUsers && poll.votedUsers.includes(userEmail);
                           
                           return (
                             <div
                               key={option.id}
-                              className={`relative p-3 rounded-lg border cursor-pointer transition-all ${
+                              className={`relative p-3 rounded-lg border transition-all ${
                                 isSelected 
                                   ? 'border-[#F97171] bg-[#F97171]/10' 
-                                  : 'border-[#1A1A1A] bg-[#0A0A0A] hover:border-[#F97171]/30'
-                              } ${isVoting ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                  : 'border-[#1A1A1A] bg-[#0A0A0A]'
+                              } ${
+                                hasVoted || isVoting 
+                                  ? 'opacity-50 cursor-not-allowed' 
+                                  : 'cursor-pointer hover:border-[#F97171]/30'
+                              }`}
                               onClick={() => {
-                                if (pollId && !isVoting && !isSelected) {
+                                if (pollId && !isVoting && !hasVoted) {
                                   handleVote(pollId, option.id);
                                 }
                               }}
@@ -254,7 +276,7 @@ export default function HomePage({ onNavigate }: HomePageProps) {
                               <div className="flex justify-between items-center relative z-10">
                                 <span className="text-white text-sm">{option.text}</span>
                                 <span className="text-[#9DA3AF] text-sm">
-                                  {isVoting ? 'Voting...' : `${option.votes} votes`}
+                                  {isVoting ? 'Voting...' : hasVoted ? 'Already voted' : `${option.votes} votes`}
                                 </span>
                               </div>
                               {percentage > 0 && (

@@ -3,31 +3,20 @@
  */
 
 /**
- * Generates a unique 16-character wallet address
- * Uses a combination of timestamp, random characters, and checksum for uniqueness
- * @returns A 16-character alphanumeric wallet address
+ * Generates a unique 16-character crypto-style wallet address
+ * Uses hexadecimal format to mimic real crypto wallet addresses
+ * @returns A 16-character hexadecimal wallet address
  */
 export function generateWalletAddress(): string {
-  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  const hexChars = '0123456789ABCDEF';
   
-  // Get timestamp-based component (4 chars)
-  const timestamp = Date.now().toString(36).toUpperCase().slice(-4);
-  
-  // Generate random component (10 chars)
-  let randomPart = '';
-  for (let i = 0; i < 10; i++) {
-    randomPart += chars.charAt(Math.floor(Math.random() * chars.length));
+  // Generate 16 random hexadecimal characters
+  let address = '';
+  for (let i = 0; i < 16; i++) {
+    address += hexChars.charAt(Math.floor(Math.random() * hexChars.length));
   }
   
-  // Generate checksum (2 chars) based on timestamp and random part
-  const combined = timestamp + randomPart;
-  let checksum = 0;
-  for (let i = 0; i < combined.length; i++) {
-    checksum += combined.charCodeAt(i);
-  }
-  const checksumStr = (checksum % 1296).toString(36).toUpperCase().padStart(2, '0');
-  
-  return timestamp + randomPart + checksumStr;
+  return address;
 }
 
 /**
@@ -41,8 +30,8 @@ export function isValidWalletAddress(address: string): boolean {
     return false;
   }
   
-  // Check if all characters are alphanumeric
-  const validChars = /^[A-Z0-9]+$/;
+  // Check if all characters are hexadecimal
+  const validChars = /^[0-9A-F]+$/;
   return validChars.test(address);
 }
 
