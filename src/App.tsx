@@ -11,20 +11,27 @@ import InClassPage from './pages/InClassPage';
 import CreatePage from './pages/CreatePage';
 import WalletPage from './pages/WalletPage';
 import MePage from './pages/MePage';
+import UserProfilePage from './pages/UserProfilePage';
 import OTPVerificationPage from './pages/OTPVerificationPage';
 import PasswordSetupPage from './pages/PasswordSetupPage';
 import SeedPhraseDisplayPage from './pages/SeedPhraseDisplayPage';
 import SeedPhraseVerificationPage from './pages/SeedPhraseVerificationPage';
 import CompleteRegistrationPage from './pages/CompleteRegistrationPage';
 
-type Page = 'login' | 'password' | 'seed' | 'home' | 'local' | 'inclass' | 'create' | 'wallet' | 'me' | 'otp-verification' | 'password-setup' | 'seed-display' | 'seed-verification' | 'complete-registration';
+type Page = 'login' | 'password' | 'seed' | 'home' | 'local' | 'inclass' | 'create' | 'wallet' | 'me' | 'user-profile' | 'otp-verification' | 'password-setup' | 'seed-display' | 'seed-verification' | 'complete-registration';
 
 function App() {
   const [currentPage, setCurrentPage] = useState<Page>(auth.currentUser ? 'home' : 'login');
   const [email, setEmail] = useState('');
+  const [viewingUserEmail, setViewingUserEmail] = useState<string>('');
 
   const navigateTo = (page: Page) => {
     setCurrentPage(page);
+  };
+
+  const navigateToUserProfile = (userEmail: string) => {
+    setViewingUserEmail(userEmail);
+    setCurrentPage('user-profile');
   };
 
   // Keep user logged in across refreshes by reacting to Firebase auth state
@@ -81,17 +88,19 @@ function App() {
           onStartOver={() => navigateTo('login')}
         />;
       case 'home':
-        return <HomePage onNavigate={navigateTo} />;
+        return <HomePage onNavigate={navigateTo} onNavigateToUserProfile={navigateToUserProfile} />;
       case 'local':
         return <LocalPage onNavigate={navigateTo} />;
       case 'inclass':
-        return <InClassPage onNavigate={navigateTo} />;
+        return <InClassPage onNavigate={navigateTo} onNavigateToUserProfile={navigateToUserProfile} />;
       case 'create':
         return <CreatePage onNavigate={navigateTo} email={email} />;
       case 'wallet':
         return <WalletPage onNavigate={navigateTo} />;
       case 'me':
         return <MePage email={email} onNavigate={navigateTo} onLogout={async () => { await logoutUser(); navigateTo('login'); }} />;
+      case 'user-profile':
+        return <UserProfilePage userEmail={viewingUserEmail} onNavigate={navigateTo} onBack={() => navigateTo('home')} />;
       default:
         return <LoginPage onContinue={(email) => { setEmail(email); navigateTo('password'); }} />;
     }

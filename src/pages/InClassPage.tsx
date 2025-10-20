@@ -6,6 +6,7 @@ import { getUserData } from '../services/authService';
 
 interface InClassPageProps {
   onNavigate: (page: 'home' | 'local' | 'create' | 'wallet' | 'me' | 'inclass') => void;
+  onNavigateToUserProfile: (userEmail: string) => void;
 }
 
 const CLASSES = [
@@ -31,7 +32,7 @@ const CLASSES = [
   }
 ];
 
-export default function InClassPage({ onNavigate }: InClassPageProps) {
+export default function InClassPage({ onNavigate, onNavigateToUserProfile }: InClassPageProps) {
   const [selectedClass, setSelectedClass] = useState<number | null>(null);
   const [polls, setPolls] = useState<Poll[]>([]);
   const [loading, setLoading] = useState(false);
@@ -110,7 +111,13 @@ export default function InClassPage({ onNavigate }: InClassPageProps) {
                 return option;
               });
               const newTotalVotes = updatedOptions.reduce((total, option) => total + option.votes, 0);
-              return { ...poll, options: updatedOptions, totalVotes: newTotalVotes };
+              const updatedVotedUsers = [...(poll.votedUsers || []), userEmail];
+              return { 
+                ...poll, 
+                options: updatedOptions, 
+                totalVotes: newTotalVotes,
+                votedUsers: updatedVotedUsers
+              };
             }
             return poll;
           })
@@ -199,9 +206,18 @@ export default function InClassPage({ onNavigate }: InClassPageProps) {
                          </span>
                        </div>
                        <div>
-                         <p className="text-white font-semibold">
-                           {poll.isAnonymous ? poll.authorTag : poll.authorName || 'Unknown User'}
-                         </p>
+                         {poll.isAnonymous ? (
+                           <p className="text-white font-semibold">
+                             {poll.authorTag}
+                           </p>
+                         ) : (
+                           <button 
+                             onClick={() => onNavigateToUserProfile(poll.authorEmail)}
+                             className="text-white font-semibold hover:text-[#F97171] transition-colors cursor-pointer text-left"
+                           >
+                             {poll.authorName || 'Unknown User'}
+                           </button>
+                         )}
                          <p className="text-[#9DA3AF] text-sm">{formatTimeAgo(poll.createdAt)}</p>
                        </div>
                      </div>

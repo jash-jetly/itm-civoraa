@@ -310,3 +310,51 @@ export const voteOnPoll = async (pollId: string, optionId: string, visibility: '
     return { success: false, error: 'Failed to submit vote' };
   }
 };
+
+// Get user's created polls
+export const getUserPolls = async (userEmail: string): Promise<{ success: boolean; polls?: Poll[]; error?: string }> => {
+  try {
+    // Get global polls by user
+    const globalQuery = query(
+      collection(db, 'itm', 'data', 'global_polls'),
+      where('authorEmail', '==', userEmail),
+      orderBy('createdAt', 'desc')
+    );
+    
+    // Get class polls by user
+    const classQuery = query(
+      collection(db, 'itm', 'data', 'class_polls'),
+      where('authorEmail', '==', userEmail),
+      orderBy('createdAt', 'desc')
+    );
+    
+    const [globalSnapshot, classSnapshot] = await Promise.all([
+      getDocs(globalQuery),
+      getDocs(classQuery)
+    ]);
+    
+    const polls: Poll[] = [];
+    
+    globalSnapshot.forEach((doc) => {
+      polls.push({
+        id: doc.id,
+        ...doc.data()
+      } as Poll);
+    });
+    
+    classSnapshot.forEach((doc) => {
+      polls.push({
+        id: doc.id,
+        ...doc.data()
+      } as Poll);
+    });
+    
+    // Sort by creation date (newest first)
+    polls.sort((a, b) => b.createdAt.toMillis() - a.createdAt.toMillis());
+    
+    return { success: true, polls };
+  } catch (error) {
+    console.error('Error fetching user polls:', error);
+    return { success: false, error: 'Failed to fetch user polls' };
+  }
+};

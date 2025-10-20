@@ -6,6 +6,7 @@ import { getUserData } from '../services/authService';
 
 interface HomePageProps {
   onNavigate: (page: 'home' | 'local' | 'inclass' | 'create' | 'wallet' | 'me') => void;
+  onNavigateToUserProfile: (userEmail: string) => void;
 }
 
 type PollOption = { id: string; text: string };
@@ -50,7 +51,7 @@ const MOCK_POLLS: PollItem[] = [
   }
 ];
 
-export default function HomePage({ onNavigate }: HomePageProps) {
+export default function HomePage({ onNavigate, onNavigateToUserProfile }: HomePageProps) {
   const [scope, setScope] = useState<'global' | 'inclass'>('global');
   const [selected, setSelected] = useState<Record<string, string>>({});
   const [polls, setPolls] = useState<Poll[]>([]);
@@ -135,7 +136,13 @@ export default function HomePage({ onNavigate }: HomePageProps) {
                 return option;
               });
               const newTotalVotes = updatedOptions.reduce((total, option) => total + option.votes, 0);
-              return { ...poll, options: updatedOptions, totalVotes: newTotalVotes };
+              const updatedVotedUsers = [...(poll.votedUsers || []), userEmail];
+              return { 
+                ...poll, 
+                options: updatedOptions, 
+                totalVotes: newTotalVotes,
+                votedUsers: updatedVotedUsers
+              };
             }
             return poll;
           })
@@ -237,9 +244,18 @@ export default function HomePage({ onNavigate }: HomePageProps) {
                   </div>
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-2">
-                      <span className="text-[#F97171] font-medium">
-                        {poll.isAnonymous ? poll.authorTag : poll.authorName || 'Unknown User'}
-                      </span>
+                      {poll.isAnonymous ? (
+                        <span className="text-[#F97171] font-medium">
+                          {poll.authorTag}
+                        </span>
+                      ) : (
+                        <button 
+                          onClick={() => onNavigateToUserProfile(poll.authorEmail)}
+                          className="text-[#F97171] font-medium hover:text-[#FF6B6B] transition-colors cursor-pointer"
+                        >
+                          {poll.authorName || 'Unknown User'}
+                        </button>
+                      )}
                       <span className="text-[#9DA3AF] text-sm">{poll.addressShort}</span>
                       <span className="text-[#9DA3AF] text-sm">•</span>
                       <span className="text-[#9DA3AF] text-sm">{formatTimeAgo(poll.createdAt)}</span>

@@ -169,7 +169,7 @@ export const createDiscussion = async (discussionData: Omit<Discussion, 'id' | '
       createdAt: serverTimestamp()
     };
     
-    const docRef = await addDoc(collection(db, 'itm', 'discussions'), discussion);
+    const docRef = await addDoc(collection(db, 'itm', 'data', 'discussions'), discussion);
     return docRef.id;
   } catch (error) {
     console.error('Error creating discussion:', error);
@@ -180,7 +180,7 @@ export const createDiscussion = async (discussionData: Omit<Discussion, 'id' | '
 export const getDiscussions = async (limitCount: number = 20): Promise<Discussion[]> => {
   try {
     const q = query(
-      collection(db, 'itm', 'discussions'),
+      collection(db, 'itm', 'data', 'discussions'),
       orderBy('createdAt', 'desc'),
       limit(limitCount)
     );
@@ -198,7 +198,7 @@ export const getDiscussions = async (limitCount: number = 20): Promise<Discussio
 
 export const getDiscussion = async (discussionId: string): Promise<Discussion | null> => {
   try {
-    const docRef = doc(db, 'itm', 'discussions', discussionId);
+    const docRef = doc(db, 'itm', 'data', 'discussions', discussionId);
     const docSnap = await getDoc(docRef);
     
     if (docSnap.exists()) {
@@ -222,7 +222,7 @@ export const createNews = async (newsData: Omit<News, 'id' | 'createdAt'>): Prom
       createdAt: serverTimestamp()
     };
     
-    const docRef = await addDoc(collection(db, 'itm', 'news'), news);
+    const docRef = await addDoc(collection(db, 'itm', 'data', 'news'), news);
     return docRef.id;
   } catch (error) {
     console.error('Error creating news:', error);
@@ -233,7 +233,7 @@ export const createNews = async (newsData: Omit<News, 'id' | 'createdAt'>): Prom
 export const getNews = async (limitCount: number = 20): Promise<News[]> => {
   try {
     const q = query(
-      collection(db, 'itm', 'news'),
+      collection(db, 'itm', 'data', 'news'),
       orderBy('createdAt', 'desc'),
       limit(limitCount)
     );
@@ -251,7 +251,7 @@ export const getNews = async (limitCount: number = 20): Promise<News[]> => {
 
 export const getNewsItem = async (newsId: string): Promise<News | null> => {
   try {
-    const docRef = doc(db, 'itm', 'news', newsId);
+    const docRef = doc(db, 'itm', 'data', 'news', newsId);
     const docSnap = await getDoc(docRef);
     
     if (docSnap.exists()) {
@@ -290,7 +290,7 @@ export const updateClassPost = async (className: string, postId: string, updates
 
 export const updateDiscussion = async (discussionId: string, updates: Partial<Discussion>): Promise<void> => {
   try {
-    const docRef = doc(db, 'itm', 'discussions', discussionId);
+    const docRef = doc(db, 'itm', 'data', 'discussions', discussionId);
     await updateDoc(docRef, updates);
   } catch (error) {
     console.error('Error updating discussion:', error);
@@ -300,7 +300,7 @@ export const updateDiscussion = async (discussionId: string, updates: Partial<Di
 
 export const updateNews = async (newsId: string, updates: Partial<News>): Promise<void> => {
   try {
-    const docRef = doc(db, 'itm', 'news', newsId);
+    const docRef = doc(db, 'itm', 'data', 'news', newsId);
     await updateDoc(docRef, updates);
   } catch (error) {
     console.error('Error updating news:', error);
@@ -331,7 +331,7 @@ export const deleteClassPost = async (className: string, postId: string): Promis
 
 export const deleteDiscussion = async (discussionId: string): Promise<void> => {
   try {
-    const docRef = doc(db, 'itm', 'discussions', discussionId);
+    const docRef = doc(db, 'itm', 'data', 'discussions', discussionId);
     await deleteDoc(docRef);
   } catch (error) {
     console.error('Error deleting discussion:', error);
@@ -341,10 +341,50 @@ export const deleteDiscussion = async (discussionId: string): Promise<void> => {
 
 export const deleteNews = async (newsId: string): Promise<void> => {
   try {
-    const docRef = doc(db, 'itm', 'news', newsId);
+    const docRef = doc(db, 'itm', 'data', 'news', newsId);
     await deleteDoc(docRef);
   } catch (error) {
     console.error('Error deleting news:', error);
+    throw error;
+  }
+};
+
+// Get user's discussions
+export const getUserDiscussions = async (userEmail: string): Promise<Discussion[]> => {
+  try {
+    const q = query(
+      collection(db, 'itm', 'data', 'discussions'),
+      where('createdBy', '==', userEmail),
+      orderBy('createdAt', 'desc')
+    );
+    
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    } as Discussion));
+  } catch (error) {
+    console.error('Error getting user discussions:', error);
+    throw error;
+  }
+};
+
+// Get user's news
+export const getUserNews = async (userEmail: string): Promise<News[]> => {
+  try {
+    const q = query(
+      collection(db, 'itm', 'data', 'news'),
+      where('createdBy', '==', userEmail),
+      orderBy('createdAt', 'desc')
+    );
+    
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    } as News));
+  } catch (error) {
+    console.error('Error getting user news:', error);
     throw error;
   }
 };
