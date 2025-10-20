@@ -350,7 +350,7 @@ export default function MePage({ email, onNavigate, onLogout }: MePageProps) {
               >
                 <div className="flex items-start gap-3">
                   <div className="p-2 rounded-lg bg-[#F97171]/10">
-                    {item.type === 'issue' && <FileText className="w-5 h-5 text-[#F97171]" />}
+                    {item.type === 'news' && <FileText className="w-5 h-5 text-[#F97171]" />}
                     {item.type === 'poll' && <BarChart3 className="w-5 h-5 text-[#F97171]" />}
                     {item.type === 'discussion' && <MessageSquare className="w-5 h-5 text-[#F97171]" />}
                     {item.type === 'news' && <FileText className="w-5 h-5 text-[#F97171]" />}

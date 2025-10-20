@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ArrowLeft, FileText, BarChart3, MessageSquare, Plus, Globe, GraduationCap } from 'lucide-react';
+import { ArrowLeft, FileText, BarChart3, MessageSquare, Plus, Globe, GraduationCap, Image, X } from 'lucide-react';
 import BottomNav from '../components/BottomNav';
 import { createPoll } from '../services/pollService';
 
@@ -8,7 +8,7 @@ interface CreatePageProps {
   email: string;
 }
 
-type CreateType = 'issue' | 'poll' | 'discussion' | null;
+type CreateType = 'news' | 'poll' | 'discussion' | null;
 
 const CLASSES = [
   {
@@ -44,9 +44,35 @@ export default function CreatePage({ onNavigate, email }: CreatePageProps) {
   const [tags, setTags] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [selectedImages, setSelectedImages] = useState<File[]>([]);
+  const [imagePreviewUrls, setImagePreviewUrls] = useState<string[]>([]);
 
   const addPollOption = () => {
     setPollOptions([...pollOptions, '']);
+  };
+
+  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (files) {
+      const newFiles = Array.from(files).slice(0, 3 - selectedImages.length); // Max 3 images
+      const newImages = [...selectedImages, ...newFiles];
+      setSelectedImages(newImages);
+
+      // Create preview URLs
+      const newPreviewUrls = newFiles.map(file => URL.createObjectURL(file));
+      setImagePreviewUrls([...imagePreviewUrls, ...newPreviewUrls]);
+    }
+  };
+
+  const removeImage = (index: number) => {
+    const newImages = selectedImages.filter((_, i) => i !== index);
+    const newPreviewUrls = imagePreviewUrls.filter((_, i) => i !== index);
+    
+    // Revoke the URL to free memory
+    URL.revokeObjectURL(imagePreviewUrls[index]);
+    
+    setSelectedImages(newImages);
+    setImagePreviewUrls(newPreviewUrls);
   };
 
   const updatePollOption = (index: number, value: string) => {
@@ -79,9 +105,10 @@ export default function CreatePage({ onNavigate, email }: CreatePageProps) {
         isAnonymous,
         visibility,
         classId: visibility === 'class' ? selectedClass || undefined : undefined,
-        className: visibility === 'class' && selectedClassData ? selectedClassData.name : undefined,
+        className: visibility === 'class' && selectedClass ? CLASSES.find(c => c.id === selectedClass)?.name : undefined,
         tags,
-        type: selectedType
+        type: selectedType,
+        imageFiles: selectedType === 'discussion' ? selectedImages : undefined
       });
 
       if (result.success) {
@@ -153,7 +180,7 @@ export default function CreatePage({ onNavigate, email }: CreatePageProps) {
           </button>
 
           <button
-            onClick={() => setSelectedType('issue')}
+            onClick={() => setSelectedType('news')}
             className="w-full bg-gradient-to-br from-[#0A0A0A] to-[#1A1A1A] border border-[#1A1A1A] hover:border-[#F97171]/50 rounded-xl p-6 transition-all hover:shadow-[0_0_30px_rgba(249,113,113,0.2)] text-left group"
           >
             <div className="flex items-center gap-4">
@@ -307,6 +334,48 @@ export default function CreatePage({ onNavigate, email }: CreatePageProps) {
               rows={6}
               className="w-full px-4 py-3 bg-[#0A0A0A] border border-[#1A1A1A] rounded-xl text-white placeholder-[#9DA3AF]/50 focus:outline-none focus:border-[#F97171]/50 focus:ring-2 focus:ring-[#F97171]/20 transition-all resize-none"
             />
+          </div>
+        )}
+
+        {selectedType === 'discussion' && (
+          <div className="space-y-4">
+            <label className="text-sm text-[#9DA3AF] font-medium">Images (Optional)</label>
+            
+            {/* Image Upload Button */}
+            {selectedImages.length < 3 && (
+              <label className="w-full py-4 border-2 border-dashed border-[#1A1A1A] hover:border-[#F97171]/50 rounded-xl text-[#9DA3AF] hover:text-[#F97171] transition-all flex items-center justify-center gap-2 cursor-pointer">
+                <Image className="w-5 h-5" />
+                <span>Add Images (Max 3)</span>
+                <input
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  onChange={handleImageUpload}
+                  className="hidden"
+                />
+              </label>
+            )}
+
+            {/* Image Previews */}
+            {imagePreviewUrls.length > 0 && (
+              <div className="grid grid-cols-2 gap-3">
+                {imagePreviewUrls.map((url, index) => (
+                  <div key={index} className="relative group">
+                    <img
+                      src={url}
+                      alt={`Preview ${index + 1}`}
+                      className="w-full h-32 object-cover rounded-lg border border-[#1A1A1A]"
+                    />
+                    <button
+                      onClick={() => removeImage(index)}
+                      className="absolute top-2 right-2 w-6 h-6 bg-red-500 hover:bg-red-600 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                    >
+                      <X className="w-3 h-3 text-white" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
 

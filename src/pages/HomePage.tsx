@@ -7,6 +7,7 @@ import { getUserData } from '../services/authService';
 interface HomePageProps {
   onNavigate: (page: 'home' | 'local' | 'inclass' | 'create' | 'wallet' | 'me') => void;
   onNavigateToUserProfile: (userEmail: string) => void;
+  onNavigateToPostDetail: (post: Poll) => void;
 }
 
 type PollOption = { id: string; text: string };
@@ -51,7 +52,7 @@ const MOCK_POLLS: PollItem[] = [
   }
 ];
 
-export default function HomePage({ onNavigate, onNavigateToUserProfile }: HomePageProps) {
+export default function HomePage({ onNavigate, onNavigateToUserProfile, onNavigateToPostDetail }: HomePageProps) {
   const [scope, setScope] = useState<'global' | 'inclass'>('global');
   const [selected, setSelected] = useState<Record<string, string>>({});
   const [polls, setPolls] = useState<Poll[]>([]);
@@ -240,7 +241,7 @@ export default function HomePage({ onNavigate, onNavigateToUserProfile }: HomePa
                   <div className="p-2 rounded-lg bg-[#F97171]/10">
                     {poll.type === 'poll' && <BarChart3 className="w-5 h-5 text-[#F97171]" />}
                     {poll.type === 'discussion' && <MessageCircle className="w-5 h-5 text-[#F97171]" />}
-                    {poll.type === 'issue' && <FileText className="w-5 h-5 text-[#F97171]" />}
+                    {poll.type === 'news' && <FileText className="w-5 h-5 text-[#F97171]" />}
                   </div>
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-2">
@@ -325,10 +326,13 @@ export default function HomePage({ onNavigate, onNavigateToUserProfile }: HomePa
                     )}
 
                     <div className="flex items-center gap-4 text-[#9DA3AF] text-sm">
-                      <div className="flex items-center gap-1">
+                      <button 
+                        onClick={() => onNavigateToPostDetail(poll)}
+                        className="flex items-center gap-1 hover:text-[#F97171] transition-colors cursor-pointer"
+                      >
                         <MessageCircle className="w-4 h-4" />
                         <span>{poll.comments}</span>
-                      </div>
+                      </button>
                       <div className="flex items-center gap-1">
                         <Share2 className="w-4 h-4" />
                         <span>Share</span>

@@ -11,7 +11,8 @@ import {
   updateDoc,
   getDoc
 } from 'firebase/firestore';
-import { db } from '../firebase';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { db, storage } from '../firebase';
 import { sanitizeInput } from '../utils/security';
 
 export interface PollOption {
@@ -38,8 +39,9 @@ export interface Poll {
   updatedAt: Timestamp;
   comments: number;
   totalVotes: number;
-  type: 'poll' | 'discussion' | 'issue';
+  type: 'poll' | 'discussion' | 'news';
   votedUsers: string[]; // Array of user emails who have voted
+  imageUrls?: string[]; // Array of image URLs for discussions
 }
 
 export interface CreatePollData {
@@ -52,7 +54,8 @@ export interface CreatePollData {
   classId?: number;
   className?: string;
   tags?: string;
-  type: 'poll' | 'discussion' | 'issue';
+  type: 'poll' | 'discussion' | 'news';
+  imageFiles?: File[]; // Array of image files for discussions
 }
 
 // Generate a random author tag for anonymous posts
@@ -139,6 +142,25 @@ export const createPoll = async (pollData: CreatePollData): Promise<{ success: b
       ? pollData.tags.split(',').map(tag => sanitizeInput(tag.trim())).filter(tag => tag)
       : [];
 
+    // Upload images if provided (for discussions)
+    let imageUrls: string[] = [];
+    if (pollData.imageFiles && pollData.imageFiles.length > 0 && pollData.type === 'discussion') {
+      try {
+        const uploadPromises = pollData.imageFiles.map(async (file, index) => {
+          const timestamp = Date.now();
+          const fileName = `discussions/${pollData.authorEmail}/${timestamp}_${index}_${file.name}`;
+          const storageRef = ref(storage, fileName);
+          const snapshot = await uploadBytes(storageRef, file);
+          return await getDownloadURL(snapshot.ref);
+        });
+        
+        imageUrls = await Promise.all(uploadPromises);
+      } catch (uploadError) {
+        console.error('Error uploading images:', uploadError);
+        return { success: false, error: 'Failed to upload images. Please try again.' };
+      }
+    }
+
     // Create poll object
     const poll: any = {
       title: sanitizedTitle,
@@ -171,6 +193,9 @@ export const createPoll = async (pollData: CreatePollData): Promise<{ success: b
     }
     if (pollData.className !== undefined && pollData.className !== null) {
       poll.className = pollData.className;
+    }
+    if (imageUrls.length > 0) {
+      poll.imageUrls = imageUrls;
     }
 
     // Add to Firestore under itm collection
@@ -371,5 +396,167 @@ export const getUserPolls = async (userEmail: string): Promise<{ success: boolea
   } catch (error) {
     console.error('Error fetching user polls:', error);
     return { success: false, error: 'Failed to fetch user polls' };
+  }
+};
+
+export interface Comment {
+  id?: string;
+  postId: string;
+  postType: 'poll' | 'discussion' | 'news';
+  content: string;
+  authorEmail: string;
+  authorName?: string;
+  authorTag: string;
+  addressShort: string;
+  isAnonymous: boolean;
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+  upvotes: number;
+  upvotedUsers: string[];
+}
+
+export interface CreateCommentData {
+  postId: string;
+  postType: 'poll' | 'discussion' | 'news';
+  content: string;
+  authorEmail: string;
+  isAnonymous: boolean;
+}
+
+// Add comment to a post
+export const addComment = async (commentData: CreateCommentData): Promise<{ success: boolean; commentId?: string; error?: string }> => {
+  try {
+    const sanitizedContent = sanitizeInput(commentData.content);
+    
+    if (!sanitizedContent.trim()) {
+      return { success: false, error: 'Comment content cannot be empty' };
+    }
+
+    // Get user data to fetch the actual name
+    let authorName = parseUsername(commentData.authorEmail);
+    try {
+      const { getUserData } = await import('./authService');
+      const userData = await getUserData(commentData.authorEmail);
+      if (userData && userData.name) {
+        authorName = userData.name;
+      }
+    } catch (error) {
+      console.warn('Could not fetch user data for comment author, using parsed name:', error);
+    }
+
+    const authorTag = generateAuthorTag();
+    const addressShort = generateAddressShort();
+
+    const comment: Omit<Comment, 'id'> = {
+      postId: commentData.postId,
+      postType: commentData.postType,
+      content: sanitizedContent,
+      authorEmail: commentData.authorEmail,
+      authorName: authorName,
+      authorTag,
+      addressShort,
+      isAnonymous: commentData.isAnonymous,
+      createdAt: serverTimestamp() as Timestamp,
+      updatedAt: serverTimestamp() as Timestamp,
+      upvotes: 0,
+      upvotedUsers: []
+    };
+
+    const docRef = await addDoc(collection(db, 'itm', 'data', 'comments'), comment);
+    
+    // Update comment count in the original post
+    await updatePostCommentCount(commentData.postId, commentData.postType, 1);
+    
+    return { success: true, commentId: docRef.id };
+  } catch (error) {
+    console.error('Error adding comment:', error);
+    return { success: false, error: 'Failed to add comment' };
+  }
+};
+
+// Get comments for a post
+export const getPostComments = async (postId: string): Promise<{ success: boolean; comments?: Comment[]; error?: string }> => {
+  try {
+    const q = query(
+      collection(db, 'itm', 'data', 'comments'),
+      where('postId', '==', postId),
+      orderBy('createdAt', 'desc')
+    );
+    
+    const querySnapshot = await getDocs(q);
+    const comments = querySnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    } as Comment));
+    
+    return { success: true, comments };
+  } catch (error) {
+    console.error('Error getting comments:', error);
+    return { success: false, error: 'Failed to get comments' };
+  }
+};
+
+// Update comment count in post
+const updatePostCommentCount = async (postId: string, postType: 'poll' | 'discussion' | 'news', increment: number): Promise<void> => {
+  try {
+    let collectionName = '';
+    if (postType === 'poll') {
+      // Check if it's a global or class poll
+      const globalPollRef = doc(db, 'itm', 'data', 'global_polls', postId);
+      const globalPollDoc = await getDoc(globalPollRef);
+      
+      if (globalPollDoc.exists()) {
+        collectionName = 'global_polls';
+      } else {
+        collectionName = 'class_polls';
+      }
+    } else if (postType === 'discussion') {
+      collectionName = 'discussions';
+    } else if (postType === 'news') {
+      collectionName = 'newss';
+    }
+
+    if (collectionName) {
+      const postRef = doc(db, 'itm', 'data', collectionName, postId);
+      const postDoc = await getDoc(postRef);
+      
+      if (postDoc.exists()) {
+        const currentComments = postDoc.data().comments || 0;
+        await updateDoc(postRef, {
+          comments: currentComments + increment
+        });
+      }
+    }
+  } catch (error) {
+    console.error('Error updating comment count:', error);
+  }
+};
+
+// Upvote a comment
+export const upvoteComment = async (commentId: string, userEmail: string): Promise<{ success: boolean; error?: string }> => {
+  try {
+    const commentRef = doc(db, 'itm', 'data', 'comments', commentId);
+    const commentDoc = await getDoc(commentRef);
+    
+    if (!commentDoc.exists()) {
+      return { success: false, error: 'Comment not found' };
+    }
+    
+    const commentData = commentDoc.data() as Comment;
+    const upvotedUsers = commentData.upvotedUsers || [];
+    
+    if (upvotedUsers.includes(userEmail)) {
+      return { success: false, error: 'You have already upvoted this comment' };
+    }
+    
+    await updateDoc(commentRef, {
+      upvotes: (commentData.upvotes || 0) + 1,
+      upvotedUsers: [...upvotedUsers, userEmail]
+    });
+    
+    return { success: true };
+  } catch (error) {
+    console.error('Error upvoting comment:', error);
+    return { success: false, error: 'Failed to upvote comment' };
   }
 };

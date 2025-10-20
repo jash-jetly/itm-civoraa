@@ -17,13 +17,18 @@ import PasswordSetupPage from './pages/PasswordSetupPage';
 import SeedPhraseDisplayPage from './pages/SeedPhraseDisplayPage';
 import SeedPhraseVerificationPage from './pages/SeedPhraseVerificationPage';
 import CompleteRegistrationPage from './pages/CompleteRegistrationPage';
+import PostDetailPage from './pages/PostDetailPage';
+import NewsPage from './pages/NewsPage';
+import NewsSubmissionPage from './pages/NewsSubmissionPage';
+import { Poll } from './services/pollService';
 
-type Page = 'login' | 'password' | 'seed' | 'home' | 'local' | 'inclass' | 'create' | 'wallet' | 'me' | 'user-profile' | 'otp-verification' | 'password-setup' | 'seed-display' | 'seed-verification' | 'complete-registration';
+type Page = 'login' | 'password' | 'seed' | 'home' | 'local' | 'inclass' | 'create' | 'wallet' | 'me' | 'user-profile' | 'post-detail' | 'news' | 'news-submit' | 'otp-verification' | 'password-setup' | 'seed-display' | 'seed-verification' | 'complete-registration';
 
 function App() {
   const [currentPage, setCurrentPage] = useState<Page>(auth.currentUser ? 'home' : 'login');
   const [email, setEmail] = useState('');
   const [viewingUserEmail, setViewingUserEmail] = useState<string>('');
+  const [selectedPost, setSelectedPost] = useState<Poll | null>(null);
 
   const navigateTo = (page: Page) => {
     setCurrentPage(page);
@@ -32,6 +37,11 @@ function App() {
   const navigateToUserProfile = (userEmail: string) => {
     setViewingUserEmail(userEmail);
     setCurrentPage('user-profile');
+  };
+
+  const navigateToPostDetail = (post: Poll) => {
+    setSelectedPost(post);
+    setCurrentPage('post-detail');
   };
 
   // Keep user logged in across refreshes by reacting to Firebase auth state
@@ -88,11 +98,11 @@ function App() {
           onStartOver={() => navigateTo('login')}
         />;
       case 'home':
-        return <HomePage onNavigate={navigateTo} onNavigateToUserProfile={navigateToUserProfile} />;
+        return <HomePage onNavigate={navigateTo} onNavigateToUserProfile={navigateToUserProfile} onNavigateToPostDetail={navigateToPostDetail} />;
       case 'local':
         return <LocalPage onNavigate={navigateTo} />;
       case 'inclass':
-        return <InClassPage onNavigate={navigateTo} onNavigateToUserProfile={navigateToUserProfile} />;
+        return <InClassPage onNavigate={navigateTo} onNavigateToUserProfile={navigateToUserProfile} onNavigateToPostDetail={navigateToPostDetail} />;
       case 'create':
         return <CreatePage onNavigate={navigateTo} email={email} />;
       case 'wallet':
@@ -101,6 +111,20 @@ function App() {
         return <MePage email={email} onNavigate={navigateTo} onLogout={async () => { await logoutUser(); navigateTo('login'); }} />;
       case 'user-profile':
         return <UserProfilePage userEmail={viewingUserEmail} onNavigate={navigateTo} onBack={() => navigateTo('home')} />;
+      case 'post-detail':
+        return selectedPost ? (
+          <PostDetailPage 
+            post={selectedPost} 
+            onBack={() => navigateTo('home')} 
+            onNavigateToUserProfile={navigateToUserProfile} 
+          />
+        ) : (
+          <HomePage onNavigate={navigateTo} onNavigateToUserProfile={navigateToUserProfile} onNavigateToPostDetail={navigateToPostDetail} />
+        );
+      case 'news':
+        return <NewsPage onNavigate={navigateTo} />;
+      case 'news-submit':
+        return <NewsSubmissionPage onNavigate={navigateTo} />;
       default:
         return <LoginPage onContinue={(email) => { setEmail(email); navigateTo('password'); }} />;
     }

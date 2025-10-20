@@ -7,6 +7,7 @@ import { getUserData } from '../services/authService';
 interface InClassPageProps {
   onNavigate: (page: 'home' | 'local' | 'create' | 'wallet' | 'me' | 'inclass') => void;
   onNavigateToUserProfile: (userEmail: string) => void;
+  onNavigateToPostDetail: (post: Poll) => void;
 }
 
 const CLASSES = [
@@ -32,7 +33,7 @@ const CLASSES = [
   }
 ];
 
-export default function InClassPage({ onNavigate, onNavigateToUserProfile }: InClassPageProps) {
+export default function InClassPage({ onNavigate, onNavigateToUserProfile, onNavigateToPostDetail }: InClassPageProps) {
   const [selectedClass, setSelectedClass] = useState<number | null>(null);
   const [polls, setPolls] = useState<Poll[]>([]);
   const [loading, setLoading] = useState(false);
@@ -291,7 +292,10 @@ export default function InClassPage({ onNavigate, onNavigateToUserProfile }: InC
                   )}
 
                   <div className="flex items-center gap-6 pt-4 border-t border-[#1A1A1A]">
-                    <button className="flex items-center gap-2 text-[#9DA3AF] hover:text-white transition-colors">
+                    <button 
+                      onClick={() => onNavigateToPostDetail(poll)}
+                      className="flex items-center gap-2 text-[#9DA3AF] hover:text-white transition-colors"
+                    >
                       <MessageCircle className="w-4 h-4" />
                       <span className="text-sm">Comment</span>
                     </button>
