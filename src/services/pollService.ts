@@ -199,9 +199,12 @@ export const getGlobalPolls = async (): Promise<{ success: boolean; polls?: Poll
     const polls: Poll[] = [];
     
     querySnapshot.forEach((doc) => {
+      const pollData = doc.data();
       polls.push({
         id: doc.id,
-        ...doc.data()
+        ...pollData,
+        // Ensure votedUsers array exists for older polls
+        votedUsers: pollData.votedUsers || []
       } as Poll);
     });
     
@@ -225,9 +228,12 @@ export const getClassPolls = async (classId: number): Promise<{ success: boolean
     const polls: Poll[] = [];
     
     querySnapshot.forEach((doc) => {
+      const pollData = doc.data();
       polls.push({
         id: doc.id,
-        ...doc.data()
+        ...pollData,
+        // Ensure votedUsers array exists for older polls
+        votedUsers: pollData.votedUsers || []
       } as Poll);
     });
     
@@ -238,7 +244,7 @@ export const getClassPolls = async (classId: number): Promise<{ success: boolean
   }
 };
 
-// Get all polls for a specific class
+// Get all class polls (for InClass page)
 export const getAllClassPolls = async (): Promise<{ success: boolean; polls?: Poll[]; error?: string }> => {
   try {
     const q = query(
@@ -250,9 +256,12 @@ export const getAllClassPolls = async (): Promise<{ success: boolean; polls?: Po
     const polls: Poll[] = [];
     
     querySnapshot.forEach((doc) => {
+      const pollData = doc.data();
       polls.push({
         id: doc.id,
-        ...doc.data()
+        ...pollData,
+        // Ensure votedUsers array exists for older polls
+        votedUsers: pollData.votedUsers || []
       } as Poll);
     });
     
@@ -336,16 +345,22 @@ export const getUserPolls = async (userEmail: string): Promise<{ success: boolea
     const polls: Poll[] = [];
     
     globalSnapshot.forEach((doc) => {
+      const pollData = doc.data();
       polls.push({
         id: doc.id,
-        ...doc.data()
+        ...pollData,
+        // Ensure votedUsers array exists for older polls
+        votedUsers: pollData.votedUsers || []
       } as Poll);
     });
     
     classSnapshot.forEach((doc) => {
+      const pollData = doc.data();
       polls.push({
         id: doc.id,
-        ...doc.data()
+        ...pollData,
+        // Ensure votedUsers array exists for older polls
+        votedUsers: pollData.votedUsers || []
       } as Poll);
     });
     

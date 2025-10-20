@@ -12,47 +12,6 @@ interface UserProfilePageProps {
 }
 
 // Mock data for user profile
-const MOCK_USER_POSTS = [
-  {
-    id: 1,
-    type: 'poll',
-    title: 'Should we implement a new grading system?',
-    status: 'active',
-    upvotes: 45,
-    createdAt: '2 days ago'
-  },
-  {
-    id: 2,
-    type: 'discussion',
-    title: 'Best practices for remote learning',
-    status: 'resolved',
-    upvotes: 32,
-    createdAt: '1 week ago'
-  }
-];
-
-const MOCK_USER_DISCUSSIONS = [
-  {
-    id: 3,
-    type: 'discussion',
-    title: 'How to improve campus facilities?',
-    status: 'active',
-    upvotes: 28,
-    createdAt: '3 days ago'
-  }
-];
-
-const MOCK_USER_NEWS = [
-  {
-    id: 4,
-    type: 'issue',
-    title: 'Library hours extension proposal',
-    status: 'pending',
-    upvotes: 67,
-    createdAt: '5 days ago'
-  }
-];
-
 // Function to parse username from email format like "2025.jashj@isu.ac.in"
 const parseUsername = (email: string): string => {
   if (!email) return 'Anonymous';
@@ -162,15 +121,6 @@ export default function UserProfilePage({ userEmail, onNavigate, onBack }: UserP
           upvotes: poll.totalVotes,
           createdAt: formatTimestamp(poll.createdAt)
         }));
-      case 'discussions':
-        return userDiscussions.map(discussion => ({
-          id: discussion.id || '',
-          type: 'discussion',
-          title: discussion.topic,
-          status: 'active',
-          upvotes: 0, // Discussions don't have upvotes in current schema
-          createdAt: formatTimestamp(discussion.createdAt)
-        }));
       case 'news':
         return userNews.map(news => ({
           id: news.id || '',
@@ -257,11 +207,7 @@ export default function UserProfilePage({ userEmail, onNavigate, onBack }: UserP
         <div className="grid grid-cols-4 gap-4 mb-6">
           <div className="text-center">
             <div className="text-2xl font-bold">{posts}</div>
-            <div className="text-sm text-gray-400">Posts</div>
-          </div>
-          <div className="text-center">
-            <div className="text-2xl font-bold">{discussions}</div>
-            <div className="text-sm text-gray-400">Discussions</div>
+            <div className="text-sm text-gray-400">Posts & Dis</div>
           </div>
           <div className="text-center">
             <div className="text-2xl font-bold">{news}</div>
@@ -274,7 +220,7 @@ export default function UserProfilePage({ userEmail, onNavigate, onBack }: UserP
         </div>
 
         {/* Tab Navigation */}
-        <div className="flex border-b border-gray-800 mb-6">
+        <center><div className="flex border-b border-gray-800 mb-6">
           <button
             onClick={() => setActiveTab('posts')}
             className={`flex-1 py-3 px-4 text-center transition-colors ${
@@ -284,18 +230,7 @@ export default function UserProfilePage({ userEmail, onNavigate, onBack }: UserP
             }`}
           >
             <Grid3X3 className="w-5 h-5 mx-auto mb-1" />
-            <span className="text-sm">Posts</span>
-          </button>
-          <button
-            onClick={() => setActiveTab('discussions')}
-            className={`flex-1 py-3 px-4 text-center transition-colors ${
-              activeTab === 'discussions'
-                ? 'border-b-2 border-[#F97171] text-[#F97171]'
-                : 'text-gray-400 hover:text-white'
-            }`}
-          >
-            <MessageSquare className="w-5 h-5 mx-auto mb-1" />
-            <span className="text-sm">Discussions</span>
+            <span className="text-sm">Posts & Dis</span>
           </button>
           <button
             onClick={() => setActiveTab('news')}
@@ -308,7 +243,7 @@ export default function UserProfilePage({ userEmail, onNavigate, onBack }: UserP
             <FileText className="w-5 h-5 mx-auto mb-1" />
             <span className="text-sm">News</span>
           </button>
-        </div>
+        </div></center>
 
         {/* Content Grid */}
         <div className="space-y-4 pb-20">

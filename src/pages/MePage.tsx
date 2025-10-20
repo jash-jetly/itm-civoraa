@@ -307,22 +307,8 @@ export default function MePage({ email, onNavigate, onLogout }: MePageProps) {
             >
               <div className="flex items-center justify-center gap-2">
                 <BarChart3 className="w-4 h-4" />
-                <span>POSTS</span>
+                <span>POSTS & DIS</span>
                 <span className="text-xs bg-[#1A1A1A] px-2 py-0.5 rounded-full">{tabCounts.posts}</span>
-              </div>
-            </button>
-            <button
-              onClick={() => setActiveTab('discussions')}
-              className={`flex-1 py-3 text-center text-sm font-medium border-b-2 transition-colors ${
-                activeTab === 'discussions'
-                  ? 'border-[#F97171] text-white'
-                  : 'border-transparent text-[#9DA3AF] hover:text-white'
-              }`}
-            >
-              <div className="flex items-center justify-center gap-2">
-                <MessageSquare className="w-4 h-4" />
-                <span>DISCUSSIONS</span>
-                <span className="text-xs bg-[#1A1A1A] px-2 py-0.5 rounded-full">{tabCounts.discussions}</span>
               </div>
             </button>
             <button
