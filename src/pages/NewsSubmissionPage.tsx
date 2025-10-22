@@ -93,32 +93,32 @@ const NewsSubmissionPage: React.FC<NewsSubmissionPageProps> = ({ onNavigate }) =
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-20">
+    <div className="min-h-screen bg-black pb-20">
       {/* Header */}
-      <div className="bg-white shadow-sm border-b">
-        <div className="flex items-center justify-between p-4">
+      <div className="px-4 pt-5 pb-4 border-b border-[#1A1A1A] sticky top-0 bg-black/95 backdrop-blur-xl z-40">
+        <div className="flex items-center justify-between">
           <button
             onClick={() => onNavigate('news')}
-            className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+            className="p-2 hover:bg-[#1A1A1A] rounded-lg transition-colors"
           >
-            <ArrowLeft className="w-6 h-6 text-gray-600" />
+            <ArrowLeft className="w-6 h-6 text-white" />
           </button>
-          <h1 className="text-xl font-semibold text-gray-900">Submit News</h1>
+          <h1 className="text-xl font-bold text-white">Submit News</h1>
           <div className="w-10" />
         </div>
       </div>
 
       {/* Form */}
-      <div className="max-w-2xl mx-auto p-4">
-        <form onSubmit={handleSubmit} className="space-y-6">
+      <div className="px-4 py-6">
+        <form onSubmit={handleSubmit} className="space-y-4">
           {/* Image Upload */}
-          <div className="bg-white rounded-lg p-6 shadow-sm">
-            <label className="block text-sm font-medium text-gray-700 mb-3">
+          <div className="bg-gradient-to-br from-[#0A0A0A] to-[#1A1A1A] border border-[#1A1A1A] rounded-xl p-6">
+            <label className="block text-sm font-medium text-white mb-3">
               Featured Image (Optional)
             </label>
             
             {!imagePreview ? (
-              <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-gray-400 transition-colors">
+              <div className="border-2 border-dashed border-[#1A1A1A] rounded-lg p-8 text-center hover:border-[#F97171]/30 transition-colors">
                 <input
                   type="file"
                   accept="image/*"
@@ -130,11 +130,11 @@ const NewsSubmissionPage: React.FC<NewsSubmissionPageProps> = ({ onNavigate }) =
                   htmlFor="image-upload"
                   className="cursor-pointer flex flex-col items-center"
                 >
-                  <Camera className="w-12 h-12 text-gray-400 mb-3" />
-                  <span className="text-sm text-gray-600">
+                  <Camera className="w-12 h-12 text-[#F97171] mb-3" />
+                  <span className="text-sm text-[#9DA3AF]">
                     Click to upload an image
                   </span>
-                  <span className="text-xs text-gray-400 mt-1">
+                  <span className="text-xs text-[#9DA3AF]/70 mt-1">
                     PNG, JPG up to 5MB
                   </span>
                 </label>
@@ -149,7 +149,7 @@ const NewsSubmissionPage: React.FC<NewsSubmissionPageProps> = ({ onNavigate }) =
                 <button
                   type="button"
                   onClick={removeImage}
-                  className="absolute top-2 right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors"
+                  className="absolute top-2 right-2 p-1 bg-[#F97171] text-black rounded-full hover:bg-[#FF6B6B] transition-colors"
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -158,8 +158,8 @@ const NewsSubmissionPage: React.FC<NewsSubmissionPageProps> = ({ onNavigate }) =
           </div>
 
           {/* Headline */}
-          <div className="bg-white rounded-lg p-6 shadow-sm">
-            <label className="block text-sm font-medium text-gray-700 mb-3">
+          <div className="bg-gradient-to-br from-[#0A0A0A] to-[#1A1A1A] border border-[#1A1A1A] rounded-xl p-6">
+            <label className="block text-sm font-medium text-white mb-3">
               Headline *
             </label>
             <input
@@ -167,20 +167,20 @@ const NewsSubmissionPage: React.FC<NewsSubmissionPageProps> = ({ onNavigate }) =
               value={headline}
               onChange={(e) => setHeadline(e.target.value)}
               placeholder="Enter news headline..."
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-4 py-3 bg-[#1A1A1A] border border-[#1A1A1A] rounded-lg focus:ring-2 focus:ring-[#F97171] focus:border-[#F97171] text-white placeholder-[#9DA3AF] transition-colors"
               maxLength={200}
             />
-            <div className="text-xs text-gray-500 mt-1">
+            <div className="text-xs text-[#9DA3AF] mt-1">
               {headline.length}/200 characters
             </div>
           </div>
 
           {/* Body - Markdown Editor */}
-          <div className="bg-white rounded-lg p-6 shadow-sm">
-            <label className="block text-sm font-medium text-gray-700 mb-3">
+          <div className="bg-gradient-to-br from-[#0A0A0A] to-[#1A1A1A] border border-[#1A1A1A] rounded-xl p-6">
+            <label className="block text-sm font-medium text-white mb-3">
               News Body *
             </label>
-            <div data-color-mode="light">
+            <div data-color-mode="dark">
               <MDEditor
                 value={body}
                 onChange={(val) => setBody(val || '')}
@@ -193,8 +193,8 @@ const NewsSubmissionPage: React.FC<NewsSubmissionPageProps> = ({ onNavigate }) =
 
           {/* Error Message */}
           {error && (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-              <p className="text-red-600 text-sm">{error}</p>
+            <div className="bg-gradient-to-br from-red-500/10 to-red-600/10 border border-red-500/20 rounded-xl p-4">
+              <p className="text-red-400 text-sm">{error}</p>
             </div>
           )}
 
@@ -202,11 +202,11 @@ const NewsSubmissionPage: React.FC<NewsSubmissionPageProps> = ({ onNavigate }) =
           <button
             type="submit"
             disabled={isSubmitting || !headline.trim() || !body.trim()}
-            className="w-full bg-blue-600 text-white py-3 px-6 rounded-lg font-medium hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
+            className="w-full bg-[#F97171] text-black py-3 px-6 rounded-lg font-medium hover:bg-[#FF6B6B] disabled:bg-[#1A1A1A] disabled:text-[#9DA3AF] disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
           >
             {isSubmitting ? (
               <>
-                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                <div className="w-5 h-5 border-2 border-black border-t-transparent rounded-full animate-spin" />
                 Submitting...
               </>
             ) : (

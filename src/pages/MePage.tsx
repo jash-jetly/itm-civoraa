@@ -8,7 +8,7 @@ import { getUserDiscussions, getUserNews, Discussion, News } from '../services/p
 
 interface MePageProps {
   email: string;
-  onNavigate: (page: 'home' | 'local' | 'create' | 'wallet' | 'me') => void;
+  onNavigate: (page: 'home' | 'local' | 'create' | 'wallet' | 'me' | 'news') => void;
   onLogout: () => void;
 }
 
@@ -277,22 +277,7 @@ export default function MePage({ email, onNavigate, onLogout }: MePageProps) {
         )}
 
         {/* Wallet Actions */}
-        <div className="grid grid-cols-2 gap-4 mb-6">
-          <button 
-            onClick={() => onNavigate('wallet')}
-            className="bg-[#F97171] hover:bg-[#FF6B6B] text-white py-3 px-4 rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
-          >
-            <Wallet className="w-4 h-4" />
-            View Wallet
-          </button>
-          <button 
-            onClick={handleRegenerateSeed}
-            className="bg-[#1A1A1A] hover:bg-[#2A2A2A] text-white py-3 px-4 rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
-          >
-            <Key className="w-4 h-4" />
-            Seed Phrase
-          </button>
-        </div>
+      
 
         {/* Tabs */}
         <div className="border-b border-[#1A1A1A] mb-6">

@@ -1,7 +1,7 @@
 import BottomNav from '../components/BottomNav';
 
 interface WalletPageProps {
-  onNavigate: (page: 'home' | 'local' | 'create' | 'wallet' | 'me') => void;
+  onNavigate: (page: 'home' | 'local' | 'create' | 'wallet' | 'me' | 'news') => void;
 }
 
 export default function WalletPage({ onNavigate }: WalletPageProps) {

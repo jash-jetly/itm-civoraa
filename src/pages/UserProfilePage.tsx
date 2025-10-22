@@ -7,7 +7,7 @@ import { getUserData, UserData } from '../services/authService';
 
 interface UserProfilePageProps {
   userEmail: string;
-  onNavigate: (page: 'home' | 'local' | 'inclass' | 'create' | 'wallet' | 'me') => void;
+  onNavigate: (page: 'home' | 'local' | 'inclass' | 'create' | 'wallet' | 'me' | 'news') => void;
   onBack: () => void;
 }
 

@@ -8,7 +8,7 @@ export const newsService = {
     const filePath = `news-images/${fileName}`
 
     const { data, error } = await supabase.storage
-      .from('news-photos')
+      .from('news')
       .upload(filePath, file)
 
     if (error) {
@@ -16,7 +16,7 @@ export const newsService = {
     }
 
     const { data: { publicUrl } } = supabase.storage
-      .from('news-photos')
+      .from('news')
       .getPublicUrl(filePath)
 
     return publicUrl

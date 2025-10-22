@@ -58,61 +58,62 @@ const NewsPage: React.FC<NewsPageProps> = ({ onNavigate }) => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 pb-20">
-        <div className="bg-white shadow-sm border-b">
-          <div className="flex items-center justify-between p-4">
+      <div className="min-h-screen bg-black pb-20">
+        <div className="px-4 pt-5 pb-4 border-b border-[#1A1A1A] sticky top-0 bg-black/95 backdrop-blur-xl z-40">
+          <div className="flex items-center justify-between">
             <button
-            onClick={() => onNavigate('home')}
-            className="p-2 hover:bg-gray-100 rounded-full transition-colors"
-          >
-            <ArrowLeft className="w-6 h-6 text-gray-600" />
-          </button>
-          <h1 className="text-xl font-semibold text-gray-900">News</h1>
-          <button
-            onClick={() => onNavigate('news-submit')}
-            className="p-2 hover:bg-gray-100 rounded-full transition-colors"
-          >
-            <Plus className="w-6 h-6 text-gray-600" />
-          </button>
+              onClick={() => onNavigate('home')}
+              className="p-2 hover:bg-[#1A1A1A] rounded-lg transition-colors"
+            >
+              <ArrowLeft className="w-6 h-6 text-white" />
+            </button>
+            <h1 className="text-xl font-bold text-white">News</h1>
+            <button
+              onClick={() => onNavigate('news-submit')}
+              className="p-2 hover:bg-[#F97171]/10 rounded-lg transition-colors"
+            >
+              <Plus className="w-6 h-6 text-[#F97171]" />
+            </button>
           </div>
         </div>
-        <div className="flex items-center justify-center h-64">
-          <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
+        <div className="flex flex-col items-center justify-center min-h-[400px]">
+          <div className="w-8 h-8 border-2 border-[#F97171] border-t-transparent rounded-full animate-spin mb-4"></div>
+          <p className="text-[#9DA3AF] text-sm">Loading news...</p>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-20">
+    <div className="min-h-screen bg-black pb-20">
       {/* Header */}
-      <div className="bg-white shadow-sm border-b">
-          <div className="flex items-center justify-between p-4">
-            <button
-              onClick={() => onNavigate('home')}
-              className="p-2 hover:bg-gray-100 rounded-full transition-colors"
-            >
-              <ArrowLeft className="w-6 h-6 text-gray-600" />
-            </button>
-            <h1 className="text-xl font-semibold text-gray-900">News</h1>
-            <button
-              onClick={() => onNavigate('news-submit')}
-              className="p-2 hover:bg-blue-100 rounded-full transition-colors"
-              title="Submit News"
-            >
-              <Plus className="w-6 h-6 text-blue-600" />
-            </button>
+      <div className="px-4 pt-5 pb-4 border-b border-[#1A1A1A] sticky top-0 bg-black/95 backdrop-blur-xl z-40">
+        <div className="flex items-center justify-between">
+          <button
+            onClick={() => onNavigate('home')}
+            className="p-2 hover:bg-[#1A1A1A] rounded-lg transition-colors"
+          >
+            <ArrowLeft className="w-6 h-6 text-white" />
+          </button>
+          <h1 className="text-xl font-bold text-white">News</h1>
+          <button
+            onClick={() => onNavigate('news-submit')}
+            className="p-2 hover:bg-[#F97171]/10 rounded-lg transition-colors"
+            title="Submit News"
+          >
+            <Plus className="w-6 h-6 text-[#F97171]" />
+          </button>
         </div>
       </div>
 
       {/* Content */}
-      <div className="max-w-4xl mx-auto p-4">
+      <div className="px-4 py-6">
         {error && (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
-            <p className="text-red-600 text-sm">{error}</p>
+          <div className="bg-gradient-to-br from-red-500/10 to-red-600/10 border border-red-500/20 rounded-xl p-4 mb-6">
+            <p className="text-red-400 text-sm">{error}</p>
             <button
               onClick={loadNews}
-              className="mt-2 text-red-600 underline text-sm hover:text-red-700"
+              className="mt-2 text-red-400 underline text-sm hover:text-red-300 transition-colors"
             >
               Try again
             </button>
@@ -120,21 +121,21 @@ const NewsPage: React.FC<NewsPageProps> = ({ onNavigate }) => {
         )}
 
         {newsArticles.length === 0 ? (
-          <div className="text-center py-12">
-            <div className="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Eye className="w-8 h-8 text-gray-400" />
+          <div className="flex flex-col items-center justify-center min-h-[400px]">
+            <div className="w-16 h-16 rounded-full bg-[#F97171]/10 flex items-center justify-center mx-auto mb-4">
+              <Eye className="w-8 h-8 text-[#F97171]" />
             </div>
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No news articles yet</h3>
-            <p className="text-gray-600 mb-4">Be the first to share some news!</p>
+            <h3 className="text-white font-semibold text-lg mb-2">No news articles yet</h3>
+            <p className="text-[#9DA3AF] text-sm mb-4 max-w-sm text-center">Be the first to share some news!</p>
             <button
               onClick={() => onNavigate('news-submit')}
-              className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+              className="px-6 py-2 bg-[#F97171] text-black rounded-lg font-medium hover:bg-[#FF6B6B] transition-colors"
             >
               Submit News
             </button>
           </div>
         ) : (
-          <div className="space-y-6">
+          <div className="space-y-4">
             {newsArticles.map((article) => {
               const isExpanded = expandedArticles.has(article.id!)
               const shouldShowReadMore = article.body.length > 300
@@ -142,7 +143,7 @@ const NewsPage: React.FC<NewsPageProps> = ({ onNavigate }) => {
               return (
                 <article
                   key={article.id}
-                  className="bg-white rounded-lg shadow-sm border overflow-hidden"
+                  className="bg-gradient-to-br from-[#0A0A0A] to-[#1A1A1A] border border-[#1A1A1A] hover:border-[#F97171]/30 rounded-xl overflow-hidden transition-all"
                 >
                   {/* Featured Image */}
                   {article.image_url && (
@@ -157,16 +158,17 @@ const NewsPage: React.FC<NewsPageProps> = ({ onNavigate }) => {
 
                   <div className="p-6">
                     {/* Headline */}
-                    <h2 className="text-2xl font-bold text-gray-900 mb-3">
+                    <h2 className="text-xl font-bold text-white mb-3">
                       {article.headline}
                     </h2>
 
                     {/* Author and Date */}
-                    <div className="flex items-center gap-4 text-sm text-gray-600 mb-4">
+                    <div className="flex items-center gap-4 text-sm text-[#9DA3AF] mb-4">
                       <div className="flex items-center gap-1">
                         <User className="w-4 h-4" />
-                        <span>{article.author_name}</span>
+                        <span className="text-[#F97171] font-medium">{article.author_name}</span>
                       </div>
+                      <span>•</span>
                       <div className="flex items-center gap-1">
                         <Calendar className="w-4 h-4" />
                         <span>{formatDate(article.created_at!)}</span>
@@ -174,7 +176,7 @@ const NewsPage: React.FC<NewsPageProps> = ({ onNavigate }) => {
                     </div>
 
                     {/* Body */}
-                    <div className="prose prose-sm max-w-none">
+                    <div className="prose prose-sm max-w-none text-[#9DA3AF] prose-headings:text-white prose-strong:text-white prose-a:text-[#F97171]">
                       <ReactMarkdown>
                         {isExpanded || !shouldShowReadMore
                           ? article.body
@@ -187,7 +189,7 @@ const NewsPage: React.FC<NewsPageProps> = ({ onNavigate }) => {
                     {shouldShowReadMore && (
                       <button
                         onClick={() => toggleExpanded(article.id!)}
-                        className="mt-3 text-blue-600 hover:text-blue-700 text-sm font-medium"
+                        className="mt-3 text-[#F97171] hover:text-[#FF6B6B] text-sm font-medium transition-colors"
                       >
                         {isExpanded ? 'Read Less' : 'Read More'}
                       </button>

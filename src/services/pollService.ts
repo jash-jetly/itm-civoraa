@@ -13,6 +13,7 @@ import {
 } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { db, storage } from '../firebase';
+import { supabase } from '../supabase';
 import { sanitizeInput } from '../utils/security';
 
 export interface PollOption {
@@ -148,10 +149,23 @@ export const createPoll = async (pollData: CreatePollData): Promise<{ success: b
       try {
         const uploadPromises = pollData.imageFiles.map(async (file, index) => {
           const timestamp = Date.now();
-          const fileName = `discussions/${pollData.authorEmail}/${timestamp}_${index}_${file.name}`;
-          const storageRef = ref(storage, fileName);
-          const snapshot = await uploadBytes(storageRef, file);
-          return await getDownloadURL(snapshot.ref);
+          const fileExt = file.name.split('.').pop();
+          const fileName = `${timestamp}_${index}_${Math.random().toString(36).substring(2)}.${fileExt}`;
+          const filePath = `discussion-images/${fileName}`;
+
+          const { data, error } = await supabase.storage
+            .from('discussions')
+            .upload(filePath, file);
+
+          if (error) {
+            throw new Error(`Failed to upload image: ${error.message}`);
+          }
+
+          const { data: { publicUrl } } = supabase.storage
+            .from('discussions')
+            .getPublicUrl(filePath);
+
+          return publicUrl;
         });
         
         imageUrls = await Promise.all(uploadPromises);

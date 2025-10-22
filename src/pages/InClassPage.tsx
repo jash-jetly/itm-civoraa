@@ -5,7 +5,7 @@ import { getClassPolls, Poll, voteOnPoll } from '../services/pollService';
 import { getUserData } from '../services/authService';
 
 interface InClassPageProps {
-  onNavigate: (page: 'home' | 'local' | 'create' | 'wallet' | 'me' | 'inclass') => void;
+  onNavigate: (page: 'home' | 'local' | 'create' | 'wallet' | 'me' | 'inclass' | 'news') => void;
   onNavigateToUserProfile: (userEmail: string) => void;
   onNavigateToPostDetail: (post: Poll) => void;
 }

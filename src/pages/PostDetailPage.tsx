@@ -100,7 +100,34 @@ export default function PostDetailPage({ post, onBack, onNavigateToUserProfile }
   };
 
   const parseUsername = (email: string): string => {
-    return email.split('@')[0];
+    if (!email) return 'Anonymous';
+    
+    try {
+      // Split email by @ to get the local part
+      const localPart = email.split('@')[0];
+      
+      // Split by . to separate year and username
+      const parts = localPart.split('.');
+      
+      if (parts.length >= 2) {
+        // Get the username part (everything after the first dot)
+        const usernamePart = parts.slice(1).join('.');
+        
+        // Insert space before capital letters and format properly
+        const formattedUsername = usernamePart
+          .replace(/([a-z])([A-Z])/g, '$1 $2') // Add space before capital letters
+          .split(' ')
+          .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+          .join(' ');
+        
+        return formattedUsername;
+      }
+      
+      // Fallback: use the whole local part
+      return localPart;
+    } catch (error) {
+      return 'Anonymous';
+    }
   };
 
   return (

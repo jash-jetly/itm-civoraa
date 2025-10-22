@@ -4,7 +4,7 @@ import BottomNav from '../components/BottomNav';
 import { createPoll } from '../services/pollService';
 
 interface CreatePageProps {
-  onNavigate: (page: 'home' | 'local' | 'create' | 'wallet' | 'me') => void;
+  onNavigate: (page: 'home' | 'news' | 'create' | 'wallet' | 'me' ) => void;
   email: string;
 }
 
@@ -175,21 +175,6 @@ export default function CreatePage({ onNavigate, email }: CreatePageProps) {
               <div>
                 <h3 className="text-white font-semibold mb-1">Start a Discussion</h3>
                 <p className="text-[#9DA3AF] text-sm">Open a conversation about anything</p>
-              </div>
-            </div>
-          </button>
-
-          <button
-            onClick={() => setSelectedType('news')}
-            className="w-full bg-gradient-to-br from-[#0A0A0A] to-[#1A1A1A] border border-[#1A1A1A] hover:border-[#F97171]/50 rounded-xl p-6 transition-all hover:shadow-[0_0_30px_rgba(249,113,113,0.2)] text-left group"
-          >
-            <div className="flex items-center gap-4">
-              <div className="p-3 rounded-lg bg-[#F97171]/10 group-hover:bg-[#F97171]/20 transition-colors">
-                <FileText className="w-6 h-6 text-[#F97171]" />
-              </div>
-              <div>
-                <h3 className="text-white font-semibold mb-1">Have some news ??</h3>
-                <p className="text-[#9DA3AF] text-sm">Share it here!!!!!!!</p>
               </div>
             </div>
           </button>

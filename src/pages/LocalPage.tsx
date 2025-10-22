@@ -3,7 +3,7 @@ import { Megaphone, Calendar, Newspaper, MessageCircle, ThumbsUp, ThumbsDown, X 
 import BottomNav from '../components/BottomNav';
 
 interface LocalPageProps {
-  onNavigate: (page: 'home' | 'local' | 'create' | 'wallet' | 'me') => void;
+  onNavigate: (page: 'home' | 'local' | 'create' | 'wallet' | 'me' | 'news') => void;
 }
 
 const MOCK_LOCAL_POSTS = [

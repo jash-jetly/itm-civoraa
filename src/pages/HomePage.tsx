@@ -5,7 +5,7 @@ import { getGlobalPolls, Poll, voteOnPoll } from '../services/pollService';
 import { getUserData } from '../services/authService';
 
 interface HomePageProps {
-  onNavigate: (page: 'home' | 'local' | 'inclass' | 'create' | 'wallet' | 'me') => void;
+  onNavigate: (page: 'home' | 'local' | 'inclass' | 'create' | 'wallet' | 'me' | 'news') => void;
   onNavigateToUserProfile: (userEmail: string) => void;
   onNavigateToPostDetail: (post: Poll) => void;
 }
@@ -310,6 +310,33 @@ export default function HomePage({ onNavigate, onNavigateToUserProfile, onNaviga
 
                     {poll.type !== 'poll' && poll.description && (
                       <p className="text-[#9DA3AF] mb-4">{poll.description}</p>
+                    )}
+
+                    {/* Display images for discussions */}
+                    {poll.type === 'discussion' && poll.imageUrls && poll.imageUrls.length > 0 && (
+                      <div className="mb-4">
+                        <div className="grid grid-cols-2 gap-2">
+                          {poll.imageUrls.slice(0, 4).map((imageUrl, index) => (
+                            <div key={index} className="relative">
+                              <img
+                                src={imageUrl}
+                                alt={`Discussion image ${index + 1}`}
+                                className="w-full h-32 object-cover rounded-lg"
+                                onError={(e) => {
+                                  e.currentTarget.style.display = 'none';
+                                }}
+                              />
+                              {index === 3 && poll.imageUrls && poll.imageUrls.length > 4 && (
+                                <div className="absolute inset-0 bg-black/50 rounded-lg flex items-center justify-center">
+                                  <span className="text-white font-medium">
+                                    +{poll.imageUrls.length - 4} more
+                                  </span>
+                                </div>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
                     )}
 
                     {poll.tags && poll.tags.length > 0 && (
